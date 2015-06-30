@@ -72,7 +72,7 @@ end
 @doc """
 Calculates the derivative with respect to all variables, even excluded ones.
 """ ->
-function get_objective_deriv!(z_par::Array{Float64, 1}, jo::JuMPObjective)
+function get_full_objective_deriv!(z_par::Array{Float64, 1}, jo::JuMPObjective)
 	@assert length(z_par) == jo.n_params
 	jo.colval[jo.vars] = z_par
 	MathProgBase.eval_grad_f(jo.m_eval, jo.grad, jo.colval)
@@ -83,14 +83,14 @@ end
 Calculates the derivative only with respect to changeable variables.
 """ ->
 function get_objective_deriv!(z_par::Array{Float64, 1}, jo::JuMPObjective, grad::Array{Float64, 1})
-	get_objective_deriv!(z_par, jo)
+	get_full_objective_deriv!(z_par, jo)
 	grad[:] = jo.grad[jo.vars]
 end
 
 @doc """
-Returns the hessian only with respect to changeable variables.
+Returns the hessian with respect to all variables.
 """ ->
-function get_objective_hess!(z_par::Array{Float64, 1}, jo::JuMPObjective)
+function get_full_objective_hess!(z_par::Array{Float64, 1}, jo::JuMPObjective)
 	@assert length(z_par) == jo.n_params
 	jo.colval[jo.vars] = z_par
 	MathProgBase.eval_hesslag(jo.m_eval, jo.hess_vec,
@@ -101,8 +101,11 @@ function get_objective_hess!(z_par::Array{Float64, 1}, jo::JuMPObjective)
 	this_hess[jo.vars, jo.vars]
 end
 
+@doc """
+Returns the hessian only with respect to changeable variables.
+""" ->
 function get_objective_hess!(z_par::Array{Float64, 1}, jo::JuMPObjective, hess)
-	hess[:,:] = get_objective_hess!(z_par, jo)
+	hess[:,:] = get_full_objective_hess!(z_par, jo)
 	hess
 end
 

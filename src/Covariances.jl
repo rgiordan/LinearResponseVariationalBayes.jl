@@ -1,4 +1,4 @@
-module Covariances
+#module Covariances
 
 import Distributions
 
@@ -143,6 +143,32 @@ function get_mvn_parameters_from_derivs(beta_deriv::Array{Float64}, beta2_deriv:
 	mean(beta_dist), cov(beta_dist)
 end
 
+@doc """
+Get the normal covariance for a scalar normal with expectation
+e_norm, expecation of the square e_norm2, and in columns
+e_col and e2_col respectively.
+""" ->
+function get_normal_variational_covariance(e_norm, e_norm2, e_col, e2_col)
+
+	norm_cov = MatrixTuple[]
+
+	norm_var = e_norm2 - e_norm ^ 2
+	# Get the linear term variance
+	push!(norm_cov, (e_col, e_col, norm_var))
+
+	# Get the covariance between the linear and quadratic terms.
+	this_cov = 2 * e_norm * norm_var
+	push!(norm_cov, (e_col, e2_col, this_cov))
+	push!(norm_cov, (e2_col, e_col, this_cov))			
+
+	# Get the covariance between the quadratic terms.
+	this_cov = 2 * norm_var ^ 2 + 4 * norm_var * (e_norm ^ 2)
+	push!(norm_cov, (e2_col, e2_col, this_cov))
+
+	norm_cov
+end
 
 
-end # module
+
+
+#end # module

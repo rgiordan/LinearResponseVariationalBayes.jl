@@ -1,0 +1,265 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Formula
+\end_layout
+
+\begin_layout Standard
+This is the formula for a multivariate hessian parameter change.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+X=t\left(Y\right) & = & \textrm{easy}\\
+J_{ij} & = & \frac{dX_{i}}{dY_{j}}\textrm{ (TODO: check for transpose here)}\\
+K_{ij} & = & \left(J^{-1}\right)_{ij}=\frac{dY_{j}}{dX_{i}}\\
+Y=t^{-1}\left(X\right) & = & \textrm{hard}\\
+\frac{df}{dY},\frac{d^{2}f}{dYdY^{T}} & = & \textrm{easy}\\
+\frac{df}{dX},\frac{d^{2}f}{dXdX^{T}} & = & \textrm{what we want}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then we have
+\begin_inset Formula 
+\begin{eqnarray*}
+\left(f_{X}\right)_{i}:=\frac{df}{dX_{i}} & = & \sum_{j=1}^{n}\frac{df}{dY_{j}}\frac{dY_{j}}{dX_{i}}=\sum_{j=1}^{n}K_{ij}\frac{df}{dY_{j}}=\left(Kf_{Y}\right)_{i}\\
+\frac{df}{dX}=f_{X} & = & Kf_{Y}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+And 
+\begin_inset Formula 
+\begin{eqnarray*}
+\frac{d^{2}f}{dXdX_{j}} & = & \frac{d}{dX_{j}}Kf_{y}\\
+ & = & \left(\frac{dK}{dX_{j}}\right)f_{y}+K\left(\frac{df_{y}^{T}}{dX_{j}}\right)^{T}\\
+ & = & \left(\frac{d}{dX_{j}}J^{-1}\right)f_{y}+K\left(\left(K\frac{df_{y}^{T}}{dY}\right)_{j\left(\cdot\right)}\right)^{T}\\
+ & = & -\left(J^{-1}\frac{dJ}{dX_{j}}J^{-1}\right)f_{y}+\left(K\left(f_{YY}K^{T}\right)_{\left(\cdot\right)j}\right)\\
+ & = & -K\frac{dJ}{dX_{j}}Kf_{y}+\left(Kf_{YY}K^{T}\right)_{\left(\cdot\right)j}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The first term is given by
+\begin_inset Formula 
+\begin{eqnarray*}
+\left(\frac{dJ}{dX_{j}}\right)_{ab} & = & \frac{d}{dX_{j}}\frac{dX_{a}}{dY_{b}}\\
+ & = & \left(K\frac{d^{2}X_{a}}{dYY_{b}}\right)_{j}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This is written in terms of the quantities 
+\begin_inset Formula $\frac{dX_{a}}{dY_{b}}$
+\end_inset
+
+, 
+\begin_inset Formula $\frac{d^{2}X_{a}}{dY_{b}dY_{c}}$
+\end_inset
+
+, 
+\begin_inset Formula $\frac{df}{dY_{a}}$
+\end_inset
+
+, and 
+\begin_inset Formula $\frac{d^{2}f}{dY_{a}dY_{b}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Test Example
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+f\left(Y\right) & = & Y_{1}^{3}+Y_{2}^{2}+aY_{1}Y_{2}\\
+\left(\begin{array}{c}
+X_{1}\\
+X_{2}
+\end{array}\right) & = & \left(\begin{array}{c}
+Y_{1}Y_{2}\\
+Y_{1}+Y_{2}
+\end{array}\right)\\
+\frac{dX}{dY^{T}} & = & J=\left(\begin{array}{cc}
+Y_{2} & Y_{1}\\
+1 & 1
+\end{array}\right)\\
+\frac{d^{2}X_{1}}{dYdY^{T}} & = & \left(\begin{array}{cc}
+0 & 1\\
+1 & 0
+\end{array}\right)\\
+\frac{d^{2}X_{2}}{dYdY^{T}} & = & \left(\begin{array}{cc}
+0 & 0\\
+0 & 0
+\end{array}\right)
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In this case,
+\begin_inset Formula 
+\begin{eqnarray*}
+X_{2} & = & \frac{X_{1}}{Y_{2}}+Y_{2}\\
+Y_{2}X_{2} & = & X_{1}+Y_{2}^{2}\\
+Y_{2}^{2}-X_{2}Y_{2}-X_{1} & = & 0\\
+Y_{2} & = & \frac{X_{2}\pm\sqrt{X_{2}^{2}+4X_{1}}}{2}\\
+Y_{1} & = & X_{2}-\frac{X_{2}\pm\sqrt{X_{2}^{2}+4X_{1}}}{2}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Since we evaluate at a particular 
+\begin_inset Formula $Y$
+\end_inset
+
+, the noninvertibility doesn't matter (?).
+ For checking numerical derivatives, note that
+\begin_inset Formula 
+\begin{eqnarray*}
+f\left(X'\right) & \approx & f\left(X\right)+\frac{df}{dX^{T}}\left(X'-X\right)\Rightarrow\\
+\left(\begin{array}{c}
+f\left(X_{A}\right)-f\left(X\right)\\
+f\left(X_{B}\right)-f\left(X\right)
+\end{array}\right) & \approx & \left(\begin{array}{c}
+\left(X_{A}-X\right)^{T}\\
+\left(X_{B}-X\right)^{T}
+\end{array}\right)\frac{df}{dX}\\
+\frac{df}{dX} & \approx & \left(\begin{array}{c}
+\left(X_{A}-X\right)^{T}\\
+\left(X_{B}-X\right)^{T}
+\end{array}\right)^{-1}\left(\begin{array}{c}
+f\left(X_{A}\right)-f\left(X\right)\\
+f\left(X_{B}\right)-f\left(X\right)
+\end{array}\right)
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then for second derivatives
+\begin_inset Formula 
+\begin{eqnarray*}
+g & := & \frac{df}{dX}\\
+g\left(X'\right) & \approx & g\left(X\right)+\frac{df}{dXdX^{T}}\left(X'-X\right)\\
+\left(\begin{array}{cc}
+\Delta g\left(X_{A}\right) & \Delta g\left(X_{B}\right)\end{array}\right) & \approx & \frac{df}{dXdX^{T}}\left(\begin{array}{cc}
+\Delta X_{A} & \Delta X_{B}\end{array}\right)\\
+\frac{df}{dXdX^{T}} & \approx & \left(\begin{array}{cc}
+\Delta g\left(X_{A}\right) & \Delta g\left(X_{B}\right)\end{array}\right)\left(\begin{array}{cc}
+\Delta X_{A} & \Delta X_{B}\end{array}\right)^{-1}\\
+ & = & \left(\begin{array}{c}
+\Delta X_{A}^{T}\\
+\Delta X_{B}^{T}
+\end{array}\right)^{-1}\left(\begin{array}{c}
+\Delta g\left(X_{A}\right)^{T}\\
+\Delta g\left(X_{B}\right)^{T}
+\end{array}\right)
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

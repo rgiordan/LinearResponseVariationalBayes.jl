@@ -1,4 +1,4 @@
-#module Covariances
+module Covariances
 
 import Distributions
 
@@ -6,6 +6,87 @@ VERSION < v"0.4.0-dev" && using Docile
 
 export sparse_mat_from_tuples
 export MatrixTuple
+
+# Multivariate log gamma related functions.
+function multivariate_trigamma(x::Float64, p::Int64)
+	sum([ trigamma(x + 0.5 * (1 - i)) for i=1:p])
+end
+
+function multivariate_digamma(x::Float64, p::Int64)
+	sum([ digamma(x + 0.5 * (1 - i)) for i=1:p])
+end
+
+function multivariate_lgamma(x::Float64, p::Int64)
+	sum([ lgamma(x + 0.5 * (1 - i)) for i=1:p])
+end
+
+
+###################################################
+# Index functions
+
+@doc """
+Return a matrix of indices that can be used to index into a linearization
+of the upper diagonal of a matrix.
+""" ->
+function make_ud_index_matrix(k::Int64)
+	ud_mat = Array(Int64, (k, k))
+	for k1=1:k, k2=1:k
+		ud_mat[k1, k2] =
+			(k1 <= k2 ? (k1 + (k2 - 1) * k2 / 2) :
+				        (k2 + (k1 - 1) * k1 / 2))
+	end
+	ud_mat
+end
+
+@doc """
+Convert the upper diagonal of a matrix to a vector using the indieces of ud_ind.
+""" ->
+function linearize_matrix(mat::Matrix{Float64}, ud_ind::Matrix{Int64})
+	k_ud = maximum(ud_ind)
+	k_tot = size(ud_ind, 1)
+
+	mat_lin = Array(Float64, k_ud)
+	for k1=1:k_tot, k2=1:k1
+		mat_lin[ud_ind[k1, k2]] = mat[k1, k2]
+	end
+	mat_lin	
+end
+
+@doc """
+Get a matrix size from the number of upper triangular elements.
+""" ->
+function linearized_matrix_size(k_ud::Int64)
+	k_tot = 0.5 * (sqrt(1 + 8 * k_ud) - 1)
+	k_tot_int = int(k_tot)
+	@assert int(k_tot) == k_tot
+	k_tot_int
+end
+
+
+@doc """
+Turn a vector of upper diagonal enries back into a symmetric matrix.
+""" ->
+function unpack_ud_matrix(ud_vector, k_tot; od_scale=1.0)
+	ud_mat = Array(Float64, (k_tot, k_tot))
+	for k1=1:k_tot, k2=1:k_tot
+		ud_mat[k1, k2] =
+			(k1 <= k2 ? ud_vector[(k1 + (k2 - 1) * k2 / 2)] :
+				        ud_vector[(k2 + (k1 - 1) * k1 / 2)])
+		ud_mat[k1, k2] *= k1 != k2 ? od_scale: 1.0
+	end
+	ud_mat
+end
+
+@doc """
+Convert a vector of upper diagonal entries into a
+matrix with halved off-diagonal entries.
+This is what's needed to convert the coefficients
+of the derivative wrt mu2 into a matrix V such that
+tr(V * mu2) = coeffs' * mu2 """ ->
+function unpack_ud_trace_coefficients(ud_vector, k_tot)
+	unpack_ud_matrix(ud_vector, k_tot, od_scale=0.5)
+end
+
 
 # A tuple representing a matrix element
 # [row, column, value]
@@ -16,6 +97,10 @@ function sparse_mat_from_tuples(tup_array::Array{MatrixTuple})
 		   Int64[x[2] for x=tup_array],
 		   Float64[x[3] for x=tup_array])
 end
+
+
+###################################################
+# Normal functions
 
 @doc """
 beta ~ MVN(beta_mean, beta_cov)
@@ -58,7 +143,7 @@ Returns:
 	An array of MatrixTuple.
 """ ->
 function get_mvn_variational_covariance(v_beta::Array{Float64, 1}, v_beta_cov::Array{Float64, 2},
-	beta_ind_model::Array{Int64}, beta2_ind_model::Array{Int64})
+	beta_ind_model::Array{Int64}, beta2_ind_model::Matrix{Int64})
 
 	k_tot = length(beta_ind_model)
 
@@ -121,25 +206,7 @@ Returns:
 function get_mvn_parameters_from_derivs(beta_deriv::Array{Float64}, beta2_deriv::Array{Float64})
 	k_tot = length(beta_deriv)
 	@assert length(beta2_deriv) == k_tot * (k_tot - 1) / 2
-
-	function unpack_ud_matrix(ud_vector, k_tot)
-		# Convert a vector of upper diagonal entries into a
-		# matrix with halved off-diagonal entries.
-		# This is what's needed to convert the coefficients
-		# of the derivative wrt beta2 into a matrix V such that
-		# tr(V * beta2) = coeffs' * beta2
-
-		ud_mat = Array(Float64, (k_tot, k_tot))
-		for k1=1:k_tot, k2=1:k_tot
-			ud_mat[k1, k2] =
-				(k1 <= k2 ? ud_vector[(k1 + (k2 - 1) * k2 / 2)] :
-					        ud_vector[(k2 + (k1 - 1) * k1 / 2)])
-			ud_mat[k1, k2] *= k1 != k2 ? 0.5: 1.
-		end
-		ud_mat
-	end
-
-	beta_dist = Distributions.MvNormalCanon(beta_deriv, -2 * unpack_ud_matrix(beta2_deriv))
+	beta_dist = Distributions.MvNormalCanon(beta_deriv, -2 * unpack_ud_trace_coefficients(beta2_deriv))
 	mean(beta_dist), cov(beta_dist)
 end
 
@@ -169,6 +236,104 @@ function get_normal_variational_covariance(e_norm, e_norm2, e_col, e2_col)
 end
 
 
+###################################################
+# Wishart functions
+
+@doc """
+The covariance of wishart distributed random variables.
+""" ->
+function get_wishart_variational_covariance(v0::Matrix{Float64}, wn::Float64, ud_ind::Matrix{Int64})
+	@assert size(v0, 1) == size(v0, 2)
+	k_tot = size(v0, 1)
+	k_ud = int(k_tot * (k_tot + 1) / 2)
+	w_cov = Array(Float64, k_ud, k_ud)
+
+	for j1=1:k_tot, i1=1:j1, j2=1:k_tot, i2=1:j2
+		ind_1 = ud_ind[j1, i1]
+		ind_2 = ud_ind[j2, i2]
+		w_cov[ind_1, ind_2] = wn * (v0[i1, j2] * v0[i2, j1] + v0[i1, i2] * v0[j1, j2])
+		if ind_1 != ind_2
+			w_cov[ind_2, ind_1] = w_cov[ind_1, ind_2]
+		end
+	end
+
+	w_cov
+end
+
+@doc """
+The variance of the log determininant of a wishart matrix.
+""" ->
+function get_wishart_log_det_variance(wn::Float64, k_tot::Int64)
+	multivariate_trigamma(float(wn) / 2, k_tot)
+end
+
+@doc """
+The covariance of the log determininant of a wishart matrix and wishart variables.
+""" ->
+function get_wishart_cross_variance(v0::Matrix{Float64}, ud_ind::Matrix{Int64})
+	2.0 * linearize_matrix(v0, ud_ind)
+end
+
+@doc """
+The covariance matrix of the sufficient statistics of a wishart distribution.
+""" ->
+function get_wishart_sufficient_stats_variational_covariance(v0::Matrix{Float64}, wn::Float64,
+	                                                         lambda_i, log_det_lambda_i, ud_ind)
+	@assert size(v0, 1) == size(v0, 2) == size(ud_ind, 1) == size(ud_ind, 2)
+	k_tot = size(lambda_suff, 1)
+	k_ud = k_tot * (k_tot + 1) / 2
+	@assert length(lambda_i) == k_ud
+
+	cov_triplets = MatrixTuple[]
+
+	log_det_cov = get_wishart_log_det_variance(wn, k_tot)
+	cross_cov = get_wishart_cross_variance(v0, ud_ind)
+	lambda_cov = get_wishart_variational_covariance(v0, wn, ud_ind)
+
+	push!(cov_triplets,
+		  (log_det_lambda_i, log_det_lambda_i, log_det_cov))
+
+	for i=1:length(lambda_i)
+		push!(cov_triplets,
+			  (log_det_lambda_i, lambda_i[i], cross_cov[i]))
+  		push!(cov_triplets,
+			  (lambda_i[i], log_det_lambda_i, cross_cov[i]))
+		for j=1:length(lambda_i)
+			push!(cov_triplets,
+				  (lambda_i[i], lambda_i[j], lambda_cov[i, j]))
+		end
+	end
+
+	cov_triplets
+end
+
+@doc """
+For a Wishart distribution with mean wn v0_inv^{-1},
+evaluate the expected log determinant.
+""" ->
+function wishart_e_log_det(wn::Float64, v0_inv::Matrix{Float64})
+	@assert size(v0_inv, 1) == size(v0_inv, 2)
+	p = size(v0_inv, 1)
+	multivariate_digamma(0.5 * wn, p) + p * log(2) - logdet(v0_inv)
+end
+
+@doc """
+For a Wishart distribution with mean wn v0_inv^{-1},
+evaluate the entropy.
+""" ->
+function wishart_entropy(wn::Float64, v0_inv::Matrix{Float64}, k_tot::Int64)
+	-0.5 * logdet(v0_inv) * (k_tot + 1.0) +
+	multivariate_lgamma(0.5 * wn, k_tot) -
+	0.5 * (wn - k_tot - 1.0) * multivariate_digamma(0.5 * wn, k_tot) +
+	0.5 * wn * k_tot
+end
 
 
-#end # module
+
+###################################################
+# Gamma functions
+
+
+
+
+end # module

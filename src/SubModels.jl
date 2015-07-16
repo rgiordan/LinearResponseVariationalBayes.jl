@@ -56,6 +56,8 @@ type JuMPObjective
 	end
 end
 
+JuMPObjective(m::Model) = JuMPObjective(m, "model", Bool[true for i in 1:length(m.colVal)])
+
 @doc """
 z_par should be of length sum(jo.vars).
 """ ->

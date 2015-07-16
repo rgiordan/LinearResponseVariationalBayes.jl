@@ -6,6 +6,9 @@ VERSION < v"0.4.0-dev" && using Docile
 
 export sparse_mat_from_tuples
 export MatrixTuple
+export make_ud_index_matrix, linearize_matrix, unpack_ud_matrix, unpack_ud_trace_coefficients
+export get_mvn_parameters_from_derivs, get_mvn_variational_covariance
+export wishart_entropy, wishart_e_log_det, get_wishart_sufficient_stats_variational_covariance
 
 # Multivariate log gamma related functions.
 function multivariate_trigamma(x::Float64, p::Int64)
@@ -66,8 +69,9 @@ end
 @doc """
 Turn a vector of upper diagonal enries back into a symmetric matrix.
 """ ->
-function unpack_ud_matrix(ud_vector, k_tot; od_scale=1.0)
-	ud_mat = Array(Float64, (k_tot, k_tot))
+function unpack_ud_matrix{T <: Number}(ud_vector::Vector{T}; od_scale=1.0)
+	k_tot = linearized_matrix_size(length(ud_vector))
+	ud_mat = Array(T, (k_tot, k_tot))
 	for k1=1:k_tot, k2=1:k_tot
 		ud_mat[k1, k2] =
 			(k1 <= k2 ? ud_vector[(k1 + (k2 - 1) * k2 / 2)] :
@@ -83,8 +87,8 @@ matrix with halved off-diagonal entries.
 This is what's needed to convert the coefficients
 of the derivative wrt mu2 into a matrix V such that
 tr(V * mu2) = coeffs' * mu2 """ ->
-function unpack_ud_trace_coefficients(ud_vector, k_tot)
-	unpack_ud_matrix(ud_vector, k_tot, od_scale=0.5)
+function unpack_ud_trace_coefficients(ud_vector)
+	unpack_ud_matrix(ud_vector, od_scale=0.5)
 end
 
 
@@ -174,7 +178,7 @@ function get_mvn_variational_covariance(v_beta::Array{Float64, 1}, v_beta_cov::A
 	# This will be cov(mu_k1 mu_k2, mu_k3 mu_k4) := cov(mu2_i12, mu_i34).
 	# Avoid double counting since only one mu_k1 mu_k2
 	# and mu_k3 mu_k4 is recorded.
-	for k1=1:vb_reg.k_tot, k2=1:k1, k3=1:vb_reg.k_tot, k4=1:k3
+	for k1=1:k_tot, k2=1:k1, k3=1:k_tot, k4=1:k3
 		i12 = beta2_ind_model[k1, k2]
 		i34 = beta2_ind_model[k3, k4]
 		this_cov = get_mvn_fourth_order_cov(v_beta, v_beta_cov,
@@ -205,7 +209,7 @@ Returns:
 """ ->
 function get_mvn_parameters_from_derivs(beta_deriv::Array{Float64}, beta2_deriv::Array{Float64})
 	k_tot = length(beta_deriv)
-	@assert length(beta2_deriv) == k_tot * (k_tot - 1) / 2
+	@assert length(beta2_deriv) == k_tot * (k_tot + 1) / 2
 	beta_dist = Distributions.MvNormalCanon(beta_deriv, -2 * unpack_ud_trace_coefficients(beta2_deriv))
 	mean(beta_dist), cov(beta_dist)
 end
@@ -280,7 +284,7 @@ The covariance matrix of the sufficient statistics of a wishart distribution.
 function get_wishart_sufficient_stats_variational_covariance(v0::Matrix{Float64}, wn::Float64,
 	                                                         lambda_i, log_det_lambda_i, ud_ind)
 	@assert size(v0, 1) == size(v0, 2) == size(ud_ind, 1) == size(ud_ind, 2)
-	k_tot = size(lambda_suff, 1)
+	k_tot = size(v0, 1)
 	k_ud = k_tot * (k_tot + 1) / 2
 	@assert length(lambda_i) == k_ud
 

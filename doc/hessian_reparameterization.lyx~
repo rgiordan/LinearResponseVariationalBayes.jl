@@ -353,7 +353,7 @@ K_{1}\frac{\partial f}{\partial Y_{1}}
 And so
 \begin_inset Formula 
 \begin{eqnarray*}
-\frac{\partial^{2}f}{\partial X_{1}\partial X_{0}^{T}} & = & K_{1}\frac{\partial^{2}f}{\partial Y_{1}\partial Y_{0}^{T}}
+\frac{\partial^{2}f}{\partial X_{1}\partial X_{0}^{T}} & = & K_{1}\frac{\partial^{2}f}{\partial Y_{0}^{T}}
 \end{eqnarray*}
 
 \end_inset

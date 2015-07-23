@@ -34,29 +34,50 @@ type JuMPObjective
 	# An in-place gradient
 	grad::Array{Float64, 1}
 
-	JuMPObjective(m::Model, name::ASCIIString, vars::Array{Bool, 1}) = begin
-		colval = m.colVal
-
-		m_const_mat = JuMP.prepConstrMatrix(m);
-		m_eval = JuMP.JuMPNLPEvaluator(m, m_const_mat);
-		MathProgBase.initialize(m_eval, [:ExprGraph, :Grad, :Hess])
-
-		# Structures for the hessian.
-		hess_struct = MathProgBase.hesslag_structure(m_eval);
-		hess_vec = zeros(length(hess_struct[1]));
-		numconstr = (length(m_eval.m.linconstr) +
-			         length(m_eval.m.quadconstr) +
-			         length(m_eval.m.nlpdata.nlconstr))
-
-		grad = zeros(length(m.colVal))
-
-		n_params = sum(vars)
-
-		new(name, m, m_eval, vars, colval, hess_struct, hess_vec, numconstr, n_params, grad)
-	end
 end
 
 JuMPObjective(m::Model) = JuMPObjective(m, "model", Bool[true for i in 1:length(m.colVal)])
+
+JuMPObjective(m::Model, name::ASCIIString, vars::Array{Bool, 1}) = begin
+	colval = m.colVal
+
+	m_const_mat = JuMP.prepConstrMatrix(m);
+	m_eval = JuMP.JuMPNLPEvaluator(m, m_const_mat);
+	MathProgBase.initialize(m_eval, [:ExprGraph, :Grad, :Hess])
+
+	# Structures for the hessian.
+	hess_struct = MathProgBase.hesslag_structure(m_eval);
+	hess_vec = zeros(length(hess_struct[1]));
+	numconstr = (length(m_eval.m.linconstr) +
+		         length(m_eval.m.quadconstr) +
+		         length(m_eval.m.nlpdata.nlconstr))
+
+	grad = zeros(length(m.colVal))
+
+	n_params = sum(vars)
+
+	JuMPObjective(name, m, m_eval, vars, colval, hess_struct, hess_vec, numconstr, n_params, grad)
+end
+
+JuMPObjective(m::Model, m_eval::JuMP.JuMPNLPEvaluator, name::ASCIIString, vars::Array{Bool, 1}) = begin
+	colval = m.colVal
+
+	m_const_mat = JuMP.prepConstrMatrix(m);
+
+	# Structures for the hessian.
+	hess_struct = MathProgBase.hesslag_structure(m_eval);
+	hess_vec = zeros(length(hess_struct[1]));
+	numconstr = (length(m_eval.m.linconstr) +
+		         length(m_eval.m.quadconstr) +
+		         length(m_eval.m.nlpdata.nlconstr))
+
+	grad = zeros(length(m.colVal))
+
+	n_params = sum(vars)
+
+	JuMPObjective(name, m, m_eval, vars, colval, hess_struct, hess_vec, numconstr, n_params, grad)
+end
+
 
 @doc """
 z_par should be of length sum(jo.vars).
@@ -115,23 +136,26 @@ end
 From an initial value of z_init for all the variables in m, optimize
 the variables associated with the sub-objective jo.
 """ ->
-function optimize_subobjective(z_init::Array{Float64, 1}, jo::JuMPObjective)
+function optimize_subobjective(z_init::Array{Float64, 1}, jo::JuMPObjective;
+	                           scale=1.0, hess_reg=0.0, show_trace=false)
 	@assert length(z_init) == length(jo.colval)
 	z_par = z_init[jo.vars]
 	jo.colval = z_init
 	function get_local_objective_val(z_par)
-		get_objective_val(z_par, jo)
+		scale * get_objective_val(z_par, jo)
 	end
 	function get_local_objective_deriv!(z_par, grad)
 		get_objective_deriv!(z_par, jo, grad)
+		grad[:] = grad * scale
 	end
 	function get_local_objective_hess!(z_par, hess)
 		get_objective_hess!(z_par, jo, hess)
+		hess[:, :] = (hess + eye(length(z_par)) * hess_reg) * scale
 	end
 	optim_res = Optim.optimize(get_local_objective_val,
 		                         get_local_objective_deriv!,
 		                         get_local_objective_hess!,
-		                         z_par, method=:newton, show_trace=true)
+		                         z_par, method=:newton, show_trace=show_trace)
 	z_final = z_init
 	z_final[jo.vars] = optim_res.minimum
 	z_final, optim_res.f_minimum, optim_res

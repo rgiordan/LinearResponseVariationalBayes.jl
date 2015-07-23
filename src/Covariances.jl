@@ -8,18 +8,19 @@ export sparse_mat_from_tuples
 export MatrixTuple
 export make_ud_index_matrix, linearize_matrix, unpack_ud_matrix, unpack_ud_trace_coefficients
 export get_mvn_parameters_from_derivs, get_mvn_variational_covariance
-export wishart_entropy, wishart_e_log_det, get_wishart_sufficient_stats_variational_covariance
+export wishart_entropy, wishart_e_log_det
+export get_wishart_sufficient_stats_variational_covariance, get_wishart_parameters_from_derivs
 
 # Multivariate log gamma related functions.
-function multivariate_trigamma(x::Float64, p::Int64)
+function multivariate_trigamma{T <: Number}(x::T, p::Int64)
 	sum([ trigamma(x + 0.5 * (1 - i)) for i=1:p])
 end
 
-function multivariate_digamma(x::Float64, p::Int64)
+function multivariate_digamma{T <: Number}(x::T, p::Int64)
 	sum([ digamma(x + 0.5 * (1 - i)) for i=1:p])
 end
 
-function multivariate_lgamma(x::Float64, p::Int64)
+function multivariate_lgamma{T <: Number}(x::T, p::Int64)
 	sum([ lgamma(x + 0.5 * (1 - i)) for i=1:p])
 end
 
@@ -311,6 +312,7 @@ function get_wishart_sufficient_stats_variational_covariance(v0::Matrix{Float64}
 	cov_triplets
 end
 
+
 @doc """
 For a Wishart distribution with mean wn v0_inv^{-1},
 evaluate the expected log determinant.
@@ -333,10 +335,45 @@ function wishart_entropy(wn::Float64, v0_inv::Matrix{Float64}, k_tot::Int64)
 end
 
 
+function get_wishart_parameters_from_derivs(lambda_deriv::Matrix{Float64}, log_det_lambda_deriv::Float64)
+	@assert size(lambda_deriv, 1) == size(lambda_deriv, 2)
+	k_tot = size(lambda_deriv, 1)
+	wn = 2. * log_det_lambda_deriv + 1. + k_tot
+	v0 = -0.5 * inv(lambda_deriv)
+	v0_inv = -2.0 * lambda_deriv
+
+	wn, v0, v0_inv
+end
+
 
 ###################################################
-# Gamma functions
+# Gamma distribution functions
 
+
+function get_gamma_parameters_from_derivs(tau_deriv::Float64, log_tau_deriv::Float64)
+	tau_alpha = log_tau_deriv + 1
+	tau_beta = -tau_deriv
+
+	@assert tau_alpha >= 0
+	@assert tau_beta >= 0
+
+	tau_alpha, tau_beta
+end
+
+function get_gamma_variational_covariance(tau_alpha::Float64, tau_beta::Float64,
+	                                      e_tau_col::Int64, e_log_tau_col::Int64)
+	tau_cov = MatrixTuple[]
+	push!(tau_cov, (e_tau_col,     e_tau_col,     tau_alpha / (tau_beta ^ 2)))
+	push!(tau_cov, (e_log_tau_col, e_log_tau_col, trigamma(tau_alpha)))
+	push!(tau_cov, (e_tau_col,     e_log_tau_col, 1 / tau_beta))
+	push!(tau_cov, (e_log_tau_col, e_tau_col,     1 / tau_beta))
+	tau_cov
+end
+
+
+function gamma_entropy(tau_alpha::Float64, tau_beta::Float64)
+	tau_alpha - log(tau_beta) + lgamma(tau_alpha) + (1 - tau_alpha) * digamma(tau_alpha)
+end
 
 
 

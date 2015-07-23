@@ -1,13 +1,28 @@
 ############
 # Analytic second derivative variable transform.
+
 module HessianReparameterization
 
 using ForwardDiff
 using DualNumbers
 
+VERSION < v"0.4.0-dev" && using Docile
+
 export transform_hessian
 export get_dx_dy_func, get_d2x_dy2_funcs, get_d2x_dy2, get_df_dy_func, get_d2f_dy2_func
 
+@doc """
+Use forward differentiation to get a jacobian from a variable transformation
+function.
+
+Args:
+	- y_to_x: A function that takes a vector y to a vector x.   Note that it must take
+	          generic numeric vectors to numeric vectors. 
+	- K: The size of the vectors
+
+Returns:
+	- A function that gets the Jacobian of the transform evaluated at y.
+""" ->
 function get_dx_dy_func(y_to_x::Function, K::Int64)
 	# The Jacobians require something that modifies its input in place.
 	function y_to_x!(y, x)

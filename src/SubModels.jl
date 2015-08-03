@@ -137,7 +137,7 @@ From an initial value of z_init for all the variables in m, optimize
 the variables associated with the sub-objective jo.
 """ ->
 function optimize_subobjective(z_init::Array{Float64, 1}, jo::JuMPObjective;
-	                           scale=1.0, hess_reg=0.0, show_trace=false)
+	                           scale=1.0, hess_reg=0.0, show_trace=false, iterations=5)
 	@assert length(z_init) == length(jo.colval)
 	z_par = z_init[jo.vars]
 	jo.colval = z_init
@@ -149,16 +149,21 @@ function optimize_subobjective(z_init::Array{Float64, 1}, jo::JuMPObjective;
 		grad[:] = grad * scale
 	end
 	function get_local_objective_hess!(z_par, hess)
-		get_objective_hess!(z_par, jo, hess)
-		hess[:, :] = (hess + eye(length(z_par)) * hess_reg) * scale
+		if hess_reg < Inf
+			get_objective_hess!(z_par, jo, hess)
+			hess[:, :] = (hess + eye(length(z_par)) * hess_reg) * scale
+		else
+			hess[:, :] = scale * eye(length(z_par))
+		end
 	end
 	optim_res = Optim.optimize(get_local_objective_val,
 		                         get_local_objective_deriv!,
 		                         get_local_objective_hess!,
-		                         z_par, method=:newton, show_trace=show_trace)
+		                         z_par, method=:newton, show_trace=show_trace, iterations=iterations)
 	z_final = z_init
 	z_final[jo.vars] = optim_res.minimum
 	z_final, optim_res.f_minimum, optim_res
 end
+
 
 end # module

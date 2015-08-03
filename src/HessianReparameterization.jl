@@ -52,12 +52,15 @@ function get_df_dy_func(f::Function, K::Int64)
 end
 
 function get_d2f_dy2_func(f::Function, K::Int64)
+	# Something is wrong with this -- it does not seem to bind consistently to the right variables
+	# and is different every evaluation.
 	ForwardDiff.forwarddiff_hessian(f, Float64, fadtype=:typed, n=K) 
 end
 
 function get_d2x_dy2(d2x_dy2_funcs::Array{Function}, y::Array{Float64, 1})
 	K = length(y)
-	Float64[ d2x_dy2_funcs[k](y)[i, j] for i=1:K, j=1:K, k=1:K ]
+	result = Float64[ d2x_dy2_funcs[k](y)[i, j] for i=1:K, j=1:K, k=1:K ]
+	result
 end
 
 function transform_hessian(dx_dy::Array{Float64, 2}, d2x_dy2::Array{Float64, 3},

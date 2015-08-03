@@ -289,6 +289,9 @@ function get_wishart_sufficient_stats_variational_covariance(v0::Matrix{Float64}
 	k_ud = k_tot * (k_tot + 1) / 2
 	@assert length(lambda_i) == k_ud
 
+	wn = 2. * log_det_lambda_suff + 1. + k_tot
+	v0 = -0.5 * inv(lambda_suff)
+
 	cov_triplets = MatrixTuple[]
 
 	log_det_cov = get_wishart_log_det_variance(wn, k_tot)

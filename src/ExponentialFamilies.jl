@@ -114,14 +114,15 @@ beta ~ MVN(beta_mean, beta_cov)
 
 Returns: Cov(beta_k1 beta_k2, beta_k3 beta_k4)
 """ ->
-function get_mvn_fourth_order_cov(beta_mean::Array{Float64, 1}, beta_cov::Array{Float64, 2},
-	                              k1::Int64, k2::Int64, k3::Int64, k4::Int64)
-    cov_12 = beta_cov[k1, k2];
-    cov_13 = beta_cov[k1, k3];
-    cov_14 = beta_cov[k1, k4];
-    cov_23 = beta_cov[k2, k3];
-    cov_24 = beta_cov[k2, k4];
-    cov_34 = beta_cov[k3, k4];
+function get_mvn_fourth_order_cov(beta_mean::Array{Float64, 1},
+	                                beta_cov::Array{Float64, 2},
+	                                k1::Int64, k2::Int64, k3::Int64, k4::Int64)
+  cov_12 = beta_cov[k1, k2];
+  cov_13 = beta_cov[k1, k3];
+  cov_14 = beta_cov[k1, k4];
+  cov_23 = beta_cov[k2, k3];
+  cov_24 = beta_cov[k2, k4];
+  cov_34 = beta_cov[k3, k4];
 
 	m_1 = beta_mean[k1];
 	m_2 = beta_mean[k2];
@@ -132,8 +133,8 @@ function get_mvn_fourth_order_cov(beta_mean::Array{Float64, 1}, beta_cov::Array{
   	      cov_14 * cov_23 +
   	      cov_13 * m_2 * m_4 +
   	      cov_14 * m_2 * m_3 +
-	      cov_23 * m_1 * m_4 +
-	      cov_24 * m_1 * m_3);
+	        cov_23 * m_1 * m_4 +
+	        cov_24 * m_1 * m_3);
 end
 
 @doc """

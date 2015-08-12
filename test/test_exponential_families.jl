@@ -4,6 +4,7 @@ using JuMPVariationalBayes.ExponentialFamilies
 import Distributions
 
 function test_wishart()
+	srand(42)
 	p = 2
 	p_ud = int(p * (p + 1) / 2)
 	mu_sigma = eye(p) + repmat([0.2], p, p)
@@ -33,22 +34,75 @@ function test_wishart()
 		w_lin[row, :] = linearize_matrix(w_draws[row], ud_ind)
 	end
 
-	wishart_cov = ExponentialFamilies.get_wishart_variational_covariance(v0, wn, ud_ind)
+	wishart_cov =
+		ExponentialFamilies.get_wishart_variational_covariance(v0, wn, ud_ind)
 	@test_approx_eq_eps((cov(w_lin) - wishart_cov) ./ wishart_cov,
 	                    zeros(p_ud, p_ud), 5e-2)
 
 	wishart_suff_stats = hcat(w_lin, w_logdet_draws);
 	wishart_suff_stats_sample_cov = cov(wishart_suff_stats)
-	wishart_cross_cov = wishart_suff_stats_sample_cov[p_ud + 1,:][1:p_ud]
-	@test_approx_eq_eps(wishart_cross_cov ./ ExponentialFamilies.get_wishart_cross_variance(v0, ud_ind),
-	                    ones(p_ud), 5e-2)
+	wishart_cross_sample_cov = wishart_suff_stats_sample_cov[p_ud + 1,:][1:p_ud]
+	wishart_cross_cov = ExponentialFamilies.get_wishart_cross_variance(v0, ud_ind)
+	@test_approx_eq_eps(wishart_cross_sample_cov ./ wishart_cross_cov,
+	                    ones(p_ud), 1e-1)
 
-	@test_approx_eq_eps(var(w_logdet_draws) / ExponentialFamilies.get_wishart_log_det_variance(wn, p),
-											1.0, 1e-2)
+	wishart_log_det_var = ExponentialFamilies.get_wishart_log_det_variance(wn, p)
+	@test_approx_eq_eps(var(w_logdet_draws) / wishart_log_det_var,
+											1.0, 5e-2)
 
 	wishart_suff_stats_cov = full(sparse_mat_from_tuples(
-		get_wishart_sufficient_stats_variational_covariance(v0, wn, collect(1:p_ud), p_ud + 1, ud_ind)))
+		get_wishart_sufficient_stats_variational_covariance(v0, wn, collect(1:p_ud),
+			p_ud + 1, ud_ind)))
 
 	@test_approx_eq_eps(wishart_suff_stats_sample_cov ./ wishart_suff_stats_cov,
 	                    ones(p_ud + 1, p_ud + 1), 1e-1)
 end
+
+
+function test_normal()
+	srand(42)
+	p = 2
+	mu_mean = convert(Array{Float64}, collect(1:p))
+	mu_sigma = 0.5 * (eye(p) + repmat([0.2], p, p))
+
+	mu_dist = Distributions.MvNormal(mu_mean, mu_sigma)
+	n_draws = int(1e6)
+	mu_draws = rand(mu_dist, n_draws)'
+	second_order_sample_cov =
+		Float64[ cov(mu_draws[:, k1] .* mu_draws[:, k2],
+		             mu_draws[:, k3] .* mu_draws[:, k4])
+		         for k1=1:p, k2=1:p, k3=1:p, k4=1:p ]
+	second_order_cov =
+ 		Float64[ ExponentialFamilies.get_mvn_fourth_order_cov(mu_mean, mu_sigma,
+		                                                      k1, k2, k3, k4)
+						 for k1=1:p, k2=1:p, k3=1:p, k4=1:p ]
+	@test_approx_eq_eps((second_order_sample_cov - second_order_cov) ./ second_order_cov,
+	                    zeros(p, p, p, p), 5e-2)
+
+	suff_stat_draws = hcat(mu_draws,
+	                       mu_draws[:, 1] .* mu_draws[:, 1],
+												 mu_draws[:, 1] .* mu_draws[:, 2],
+												 mu_draws[:, 2] .* mu_draws[:, 2])
+
+  suff_stat_cov = full(sparse_mat_from_tuples(
+		ExponentialFamilies.get_mvn_variational_covariance(
+			mu_mean, mu_sigma, collect(1:2), Int64[ 3 4; 4 5])))
+	suff_stat_sample_cov = cov(suff_stat_draws)
+	@test_approx_eq_eps((suff_stat_sample_cov - suff_stat_cov) ./ suff_stat_cov,
+											zeros(5, 5), 5e-2)
+
+	suff_stat_draws_1d = hcat(mu_draws[:, 1], mu_draws[:, 1] .^ 2)
+	suff_stat_1d_cov = full(sparse_mat_from_tuples(
+		ExponentialFamilies.get_normal_variational_covariance(
+			mu_mean[1], mu_mean[1] ^ 2 + mu_sigma[1, 1], 1, 2)))
+	suff_stat_1d_sample_cov = cov(suff_stat_draws_1d)
+	@test_approx_eq_eps((suff_stat_1d_sample_cov - suff_stat_1d_cov) ./
+	                     suff_stat_1d_cov,
+											zeros(2, 2), 5e-2)
+
+end
+
+
+
+test_wishart()
+test_normal()

@@ -365,6 +365,10 @@ function get_gamma_parameters_from_derivs(tau_deriv::Float64, log_tau_deriv::Flo
 	tau_alpha, tau_beta
 end
 
+@doc """
+Covariance of sufficient statistics for a gamma distribution with
+mean tau_alpha / tau_beta.
+""" ->
 function get_gamma_variational_covariance(tau_alpha::Float64, tau_beta::Float64,
 	                                        e_tau_col::Int64, e_log_tau_col::Int64)
 	tau_cov = MatrixTuple[]

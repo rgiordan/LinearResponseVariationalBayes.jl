@@ -3,6 +3,11 @@ using Base.Test
 using JuMPVariationalBayes.ExponentialFamilies
 import Distributions
 
+function rel_diff(x, y)
+	(x - y) ./ y
+end
+
+
 function test_wishart()
 	srand(42)
 	p = 2
@@ -19,10 +24,10 @@ function test_wishart()
 	w_logdet_draws = Float64[ logdet(w_draw) for w_draw in w_draws ];
 
 	# Test the means.
-	@test_approx_eq_eps(mean(w_logdet_draws) ./ wishart_e_log_det(wn, inv(v0)),
-	                    1.0, 1e-3)
+	@test_approx_eq_eps(rel_diff(mean(w_logdet_draws), wishart_e_log_det(wn, inv(v0))),
+	                    0.0, 1e-3)
 
-	@test_approx_eq_eps(mean(w_draws) ./ (v0 * wn), ones(p, p), 1e-2)
+	@test_approx_eq_eps(rel_diff(mean(w_draws), (v0 * wn)), zeros(p, p), 1e-2)
 
 	@test_approx_eq(ExponentialFamilies.wishart_entropy(wn, lambda, p),
 	                Distributions.entropy(w))
@@ -36,26 +41,25 @@ function test_wishart()
 
 	wishart_cov =
 		ExponentialFamilies.get_wishart_variational_covariance(v0, wn, ud_ind)
-	@test_approx_eq_eps((cov(w_lin) - wishart_cov) ./ wishart_cov,
-	                    zeros(p_ud, p_ud), 5e-2)
+	@test_approx_eq_eps(rel_diff(cov(w_lin), wishart_cov), zeros(p_ud, p_ud), 5e-2)
 
 	wishart_suff_stats = hcat(w_lin, w_logdet_draws);
 	wishart_suff_stats_sample_cov = cov(wishart_suff_stats)
 	wishart_cross_sample_cov = wishart_suff_stats_sample_cov[p_ud + 1,:][1:p_ud]
 	wishart_cross_cov = ExponentialFamilies.get_wishart_cross_variance(v0, ud_ind)
-	@test_approx_eq_eps(wishart_cross_sample_cov ./ wishart_cross_cov,
-	                    ones(p_ud), 1e-1)
+	@test_approx_eq_eps(rel_diff(wishart_cross_sample_cov, wishart_cross_cov),
+	                    zeros(p_ud), 1e-1)
 
 	wishart_log_det_var = ExponentialFamilies.get_wishart_log_det_variance(wn, p)
-	@test_approx_eq_eps(var(w_logdet_draws) / wishart_log_det_var,
-											1.0, 5e-2)
+	@test_approx_eq_eps(rel_diff(var(w_logdet_draws), wishart_log_det_var),
+											0.0, 5e-2)
 
 	wishart_suff_stats_cov = full(sparse_mat_from_tuples(
 		get_wishart_sufficient_stats_variational_covariance(v0, wn, collect(1:p_ud),
 			p_ud + 1, ud_ind)))
 
-	@test_approx_eq_eps(wishart_suff_stats_sample_cov ./ wishart_suff_stats_cov,
-	                    ones(p_ud + 1, p_ud + 1), 1e-1)
+	@test_approx_eq_eps(rel_diff(wishart_suff_stats_sample_cov, wishart_suff_stats_cov),
+	                    zeros(p_ud + 1, p_ud + 1), 1e-1)
 end
 
 
@@ -76,8 +80,7 @@ function test_normal()
  		Float64[ ExponentialFamilies.get_mvn_fourth_order_cov(mu_mean, mu_sigma,
 		                                                      k1, k2, k3, k4)
 						 for k1=1:p, k2=1:p, k3=1:p, k4=1:p ]
-	@test_approx_eq_eps((second_order_sample_cov - second_order_cov) ./
-	                    second_order_cov,
+	@test_approx_eq_eps(rel_diff(second_order_sample_cov, second_order_cov),
 	                    zeros(p, p, p, p), 5e-2)
 
 	suff_stat_draws = hcat(mu_draws,
@@ -89,7 +92,7 @@ function test_normal()
 		ExponentialFamilies.get_mvn_variational_covariance(
 			mu_mean, mu_sigma, collect(1:2), Int64[ 3 4; 4 5])))
 	suff_stat_sample_cov = cov(suff_stat_draws)
-	@test_approx_eq_eps((suff_stat_sample_cov - suff_stat_cov) ./ suff_stat_cov,
+	@test_approx_eq_eps(rel_diff(suff_stat_sample_cov, suff_stat_cov),
 											zeros(5, 5), 5e-2)
 
 	suff_stat_draws_1d = hcat(mu_draws[:, 1], mu_draws[:, 1] .^ 2)
@@ -97,8 +100,7 @@ function test_normal()
 		ExponentialFamilies.get_normal_variational_covariance(
 			mu_mean[1], mu_mean[1] ^ 2 + mu_sigma[1, 1], 1, 2)))
 	suff_stat_1d_sample_cov = cov(suff_stat_draws_1d)
-	@test_approx_eq_eps((suff_stat_1d_sample_cov - suff_stat_1d_cov) ./
-	                     suff_stat_1d_cov,
+	@test_approx_eq_eps(rel_diff(suff_stat_1d_sample_cov, suff_stat_1d_cov),
 											zeros(2, 2), 5e-2)
 
 end
@@ -107,9 +109,21 @@ end
 function test_gamma()
 	alpha = 5.0
 	beta = 10.0
+	gamma_dist = Distributions.Gamma(alpha, 1 / beta)
 
-	beta_dist = Distributions.gamma(alpha, beta)
+	n_draws = int(1e5)
+	gamma_draws = rand(gamma_dist, n_draws)
+	gamma_suff_draws = hcat(gamma_draws, log(gamma_draws))
+
+	gamma_suff_cov = full(sparse_mat_from_tuples(
+		ExponentialFamilies.get_gamma_variational_covariance(alpha, beta, 1, 2)))
+	gamma_suff_sample_cov = cov(gamma_suff_draws)
+
+	@test_approx_eq_eps(rel_diff(gamma_suff_sample_cov, gamma_suff_cov), zeros(2, 2), 1e-2)
+	@test_approx_eq(ExponentialFamilies.gamma_entropy(alpha, beta),
+	                Distributions.entropy(gamma_dist))
 end
 
 test_wishart()
 test_normal()
+test_gamma()

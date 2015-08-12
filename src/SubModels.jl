@@ -87,11 +87,11 @@ z_par should be of length sum(jo.vars).
 function get_objective_val(z_par::Array{Float64, 1}, jo::JuMPObjective; verbose=false)
 	@assert length(z_par) == jo.n_params
 	jo.colval[jo.vars] = z_par
-	elbo_val = jo.m_eval.eval_f_nl(jo.colval)
+	obj_val = jo.m_eval.eval_f_nl(jo.colval)
 	if verbose
-		println("$(jo.name) elbo: $elbo_val")
+		println("$(jo.name) elbo: $obj_val")
 	end
-	elbo_val
+	obj_val
 end
 
 @doc """
@@ -113,13 +113,13 @@ function get_objective_deriv!(z_par::Array{Float64, 1}, jo::JuMPObjective, grad:
 end
 
 @doc """
-Returns the hessian with respect to all variables.
+Returns the hessian with respect to changeable variables.
 """ ->
-function get_full_objective_hess!(z_par::Array{Float64, 1}, jo::JuMPObjective)
+function get_objective_hess(z_par::Array{Float64, 1}, jo::JuMPObjective)
 	@assert length(z_par) == jo.n_params
 	jo.colval[jo.vars] = z_par
 	MathProgBase.eval_hesslag(jo.m_eval, jo.hess_vec,
-		                      jo.colval, 1.0, zeros(jo.numconstr))
+		                        jo.colval, 1.0, zeros(jo.numconstr))
 	this_hess_ld = sparse(jo.hess_struct[1], jo.hess_struct[2],
 		                  jo.hess_vec, length(jo.colval), length(jo.colval))
 	this_hess = full(this_hess_ld + this_hess_ld' - sparse(diagm(diag(this_hess_ld))))
@@ -130,7 +130,7 @@ end
 Returns the hessian only with respect to changeable variables.
 """ ->
 function get_objective_hess!(z_par::Array{Float64, 1}, jo::JuMPObjective, hess)
-	hess[:,:] = get_full_objective_hess!(z_par, jo)
+	hess[:,:] = get_objective_hess(z_par, jo)
 	hess
 end
 
@@ -161,7 +161,8 @@ function optimize_subobjective(z_init::Array{Float64, 1}, jo::JuMPObjective;
 	optim_res = Optim.optimize(get_local_objective_val,
 		                         get_local_objective_deriv!,
 		                         get_local_objective_hess!,
-		                         z_par, method=:newton, show_trace=show_trace, iterations=iterations)
+		                         z_par, method=:newton, show_trace=show_trace,
+														 iterations=iterations)
 	z_final = z_init
 	z_final[jo.vars] = optim_res.minimum
 	z_final, optim_res.f_minimum, optim_res

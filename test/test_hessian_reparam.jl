@@ -3,12 +3,15 @@ using JuMPVariationalBayes
 using HessianReparameterization
 using Base.Test
 
+println("Testing HessianReparameterization.")
+
+
 function test_hessian_reparameterization()
 	# An example function and transform.
 	K = 2
 	a = 1.5
 
-	function f(y) 
+	function f(y)
 		y[1]^3 + y[2]^2 + a * y[1] * y[2]
 	end
 
@@ -68,7 +71,7 @@ function test_lgamma_hessian_reparameterization()
 	K = 2
 	a = 1.5
 
-	function f(y) 
+	function f(y)
 		y[1]^3 + y[2]^2 + a * y[1] * y[2]
 	end
 

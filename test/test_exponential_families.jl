@@ -3,6 +3,9 @@ using Base.Test
 using JuMPVariationalBayes.ExponentialFamilies
 import Distributions
 
+println("Testing ExponentialFamilies.")
+
+
 function rel_diff(x, y)
 	(x - y) ./ y
 end

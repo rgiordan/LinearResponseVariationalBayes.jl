@@ -1,4 +1,4 @@
-module Covariances
+module ExponentialFamilies
 
 import Distributions
 
@@ -8,7 +8,7 @@ export sparse_mat_from_tuples
 export MatrixTuple
 export make_ud_index_matrix, linearize_matrix, unpack_ud_matrix, unpack_ud_trace_coefficients
 export get_mvn_parameters_from_derivs, get_mvn_variational_covariance
-export wishart_entropy, wishart_e_log_det
+export wishart_entropy, wishart_e_log_det, get_wishart_variational_covariance
 export get_wishart_sufficient_stats_variational_covariance, get_wishart_parameters_from_derivs
 
 # Multivariate log gamma related functions.
@@ -21,7 +21,8 @@ function multivariate_digamma{T <: Number}(x::T, p::Int64)
 end
 
 function multivariate_lgamma{T <: Number}(x::T, p::Int64)
-	sum([ lgamma(x + 0.5 * (1 - i)) for i=1:p])
+	sum([ lgamma(x + 0.5 * (1 - i)) for i=1:p]) +
+	p * (p - 1.0) / 4.0 * log(pi)
 end
 
 
@@ -53,7 +54,7 @@ function linearize_matrix(mat::Matrix{Float64}, ud_ind::Matrix{Int64})
 	for k1=1:k_tot, k2=1:k1
 		mat_lin[ud_ind[k1, k2]] = mat[k1, k2]
 	end
-	mat_lin	
+	mat_lin
 end
 
 @doc """
@@ -231,7 +232,7 @@ function get_normal_variational_covariance(e_norm, e_norm2, e_col, e2_col)
 	# Get the covariance between the linear and quadratic terms.
 	this_cov = 2 * e_norm * norm_var
 	push!(norm_cov, (e_col, e2_col, this_cov))
-	push!(norm_cov, (e2_col, e_col, this_cov))			
+	push!(norm_cov, (e2_col, e_col, this_cov))
 
 	# Get the covariance between the quadratic terms.
 	this_cov = 2 * norm_var ^ 2 + 4 * norm_var * (e_norm ^ 2)
@@ -283,7 +284,7 @@ end
 The covariance matrix of the sufficient statistics of a wishart distribution.
 """ ->
 function get_wishart_sufficient_stats_variational_covariance(v0::Matrix{Float64}, wn::Float64,
-	                                                         lambda_i, log_det_lambda_i, ud_ind)
+	                                                           lambda_i, log_det_lambda_i, ud_ind)
 	@assert size(v0, 1) == size(v0, 2) == size(ud_ind, 1) == size(ud_ind, 2)
 	k_tot = size(v0, 1)
 	k_ud = k_tot * (k_tot + 1) / 2
@@ -328,6 +329,7 @@ For a Wishart distribution with mean wn v0_inv^{-1},
 evaluate the entropy.
 """ ->
 function wishart_entropy(wn::Float64, v0_inv::Matrix{Float64}, k_tot::Int64)
+	0.5 * k_tot * (k_tot + 1) * log(2) +
 	-0.5 * logdet(v0_inv) * (k_tot + 1.0) +
 	multivariate_lgamma(0.5 * wn, k_tot) -
 	0.5 * (wn - k_tot - 1.0) * multivariate_digamma(0.5 * wn, k_tot) +
@@ -348,7 +350,6 @@ end
 
 ###################################################
 # Gamma distribution functions
-
 
 function get_gamma_parameters_from_derivs(tau_deriv::Float64, log_tau_deriv::Float64)
 	tau_alpha = log_tau_deriv + 1

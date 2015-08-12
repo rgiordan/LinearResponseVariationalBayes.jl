@@ -1,12 +1,14 @@
 module SubModels
 
+# Perhaps a lot of this could be replaced with
+# https://github.com/dpo/NLPModels.jl/blob/master/src/NLPModels.jl
+
 using JuMP
 VERSION < v"0.4.0-dev" && using Docile
 
 import MathProgBase
 import ReverseDiffSparse
 import Optim
-
 
 export JuMPObjective
 export get_objective_val, get_objective_deriv!, get_objective_hess!

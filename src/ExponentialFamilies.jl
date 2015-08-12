@@ -141,29 +141,31 @@ end
 Get the covariance matrix of a multivariate multivariate normal
 sufficient statistics given the mean parameters.
 
-E(beta) = v_beta
-Cov(beta) = v_beta_cov
+E(beta) = beta_mean
+Cov(beta) = beta_cov
 beta_ind_model = A vector of the model indices of the E(beta)
 beta2_ind_model = A matrix containing the model indices of E(beta beta')
 
 Returns:
 	An array of MatrixTuple.
 """ ->
-function get_mvn_variational_covariance(v_beta::Array{Float64, 1}, v_beta_cov::Array{Float64, 2},
+function get_mvn_variational_covariance(
+	beta_mean::Array{Float64, 1}, beta_cov::Array{Float64, 2},
 	beta_ind_model::Array{Int64}, beta2_ind_model::Matrix{Int64})
 
 	k_tot = length(beta_ind_model)
 
-	@assert k_tot == length(v_beta) == size(v_beta_cov, 1) == size(v_beta_cov, 2) ==
-		size(beta2_ind_model, 1) == size(beta2_ind_model, 2)
+	@assert k_tot == length(beta_mean) ==
+					size(beta_cov, 1) == size(beta_cov, 2) ==
+					size(beta2_ind_model, 1) == size(beta2_ind_model, 2)
 
-	beta_cov = MatrixTuple[]
+	beta_cov_tuples = MatrixTuple[]
 
 	# Get the linear covariances.
 	for k1=1:k_tot, k2=1:k_tot
 		i1 = beta_ind_model[k1]
 		i2 = beta_ind_model[k2]
-		push!(beta_cov, (i1, i2, v_beta_cov[k1, k2]))
+		push!(beta_cov_tuples, (i1, i2, beta_cov[k1, k2]))
 	end
 
 	# Get the covariance between the linear and quadratic terms.
@@ -172,9 +174,10 @@ function get_mvn_variational_covariance(v_beta::Array{Float64, 1}, v_beta_cov::A
 	for k1=1:k_tot, k2=1:k1, k3=1:k_tot
 		i12 = beta2_ind_model[k1, k2]
 		i3 = beta_ind_model[k3]
-		this_cov = v_beta[k1] * v_beta_cov[k2, k3] + v_beta[k2] * v_beta_cov[k1, k3]
-		push!(beta_cov, (i3, i12, this_cov))
-		push!(beta_cov, (i12, i3, this_cov))
+		this_cov = (beta_mean[k1] * beta_cov[k2, k3] +
+		            beta_mean[k2] * beta_cov[k1, k3])
+		push!(beta_cov_tuples, (i3, i12, this_cov))
+		push!(beta_cov_tuples, (i12, i3, this_cov))
 	end
 
 	# Get the covariance between the quadratic terms.
@@ -184,13 +187,13 @@ function get_mvn_variational_covariance(v_beta::Array{Float64, 1}, v_beta_cov::A
 	for k1=1:k_tot, k2=1:k1, k3=1:k_tot, k4=1:k3
 		i12 = beta2_ind_model[k1, k2]
 		i34 = beta2_ind_model[k3, k4]
-		this_cov = get_mvn_fourth_order_cov(v_beta, v_beta_cov,
+		this_cov = get_mvn_fourth_order_cov(beta_mean, beta_cov,
 			k1, k2, k3, k4)
 
-		push!(beta_cov, (i12, i34, this_cov))
+		push!(beta_cov_tuples, (i12, i34, this_cov))
 	end
 
-	beta_cov
+	beta_cov_tuples
 end
 
 
@@ -219,25 +222,25 @@ end
 
 @doc """
 Get the normal covariance for a scalar normal with expectation
-e_norm, expecation of the square e_norm2, and in columns
-e_col and e2_col respectively.
+beta_mean, expecation of the square beta2_mean, and in columns
+beta_ind_model and beta2_ind_model respectively.
 """ ->
-function get_normal_variational_covariance(e_norm, e_norm2, e_col, e2_col)
+function get_normal_variational_covariance(beta_mean, beta2_mean, beta_ind_model, beta2_ind_model)
 
 	norm_cov = MatrixTuple[]
 
-	norm_var = e_norm2 - e_norm ^ 2
+	norm_var = beta2_mean - beta_mean ^ 2
 	# Get the linear term variance
-	push!(norm_cov, (e_col, e_col, norm_var))
+	push!(norm_cov, (beta_ind_model, beta_ind_model, norm_var))
 
 	# Get the covariance between the linear and quadratic terms.
-	this_cov = 2 * e_norm * norm_var
-	push!(norm_cov, (e_col, e2_col, this_cov))
-	push!(norm_cov, (e2_col, e_col, this_cov))
+	this_cov = 2 * beta_mean * norm_var
+	push!(norm_cov, (beta_ind_model, beta2_ind_model, this_cov))
+	push!(norm_cov, (beta2_ind_model, beta_ind_model, this_cov))
 
 	# Get the covariance between the quadratic terms.
-	this_cov = 2 * norm_var ^ 2 + 4 * norm_var * (e_norm ^ 2)
-	push!(norm_cov, (e2_col, e2_col, this_cov))
+	this_cov = 2 * norm_var ^ 2 + 4 * norm_var * (beta_mean ^ 2)
+	push!(norm_cov, (beta2_ind_model, beta2_ind_model, this_cov))
 
 	norm_cov
 end
@@ -363,7 +366,7 @@ function get_gamma_parameters_from_derivs(tau_deriv::Float64, log_tau_deriv::Flo
 end
 
 function get_gamma_variational_covariance(tau_alpha::Float64, tau_beta::Float64,
-	                                      e_tau_col::Int64, e_log_tau_col::Int64)
+	                                        e_tau_col::Int64, e_log_tau_col::Int64)
 	tau_cov = MatrixTuple[]
 	push!(tau_cov, (e_tau_col,     e_tau_col,     tau_alpha / (tau_beta ^ 2)))
 	push!(tau_cov, (e_log_tau_col, e_log_tau_col, trigamma(tau_alpha)))

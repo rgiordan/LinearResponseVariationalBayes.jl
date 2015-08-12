@@ -76,7 +76,8 @@ function test_normal()
  		Float64[ ExponentialFamilies.get_mvn_fourth_order_cov(mu_mean, mu_sigma,
 		                                                      k1, k2, k3, k4)
 						 for k1=1:p, k2=1:p, k3=1:p, k4=1:p ]
-	@test_approx_eq_eps((second_order_sample_cov - second_order_cov) ./ second_order_cov,
+	@test_approx_eq_eps((second_order_sample_cov - second_order_cov) ./
+	                    second_order_cov,
 	                    zeros(p, p, p, p), 5e-2)
 
 	suff_stat_draws = hcat(mu_draws,
@@ -103,6 +104,12 @@ function test_normal()
 end
 
 
+function test_gamma()
+	alpha = 5.0
+	beta = 10.0
+
+	beta_dist = Distributions.gamma(alpha, beta)
+end
 
 test_wishart()
 test_normal()

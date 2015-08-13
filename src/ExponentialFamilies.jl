@@ -1,6 +1,7 @@
 module ExponentialFamilies
 
 import Distributions
+using VariationalModelIndices
 
 VERSION < v"0.4.0-dev" && using Docile
 
@@ -24,49 +25,6 @@ function multivariate_lgamma{T <: Number}(x::T, p::Int64)
 	sum([ lgamma(x + 0.5 * (1 - i)) for i=1:p]) +
 	p * (p - 1.0) / 4.0 * log(pi)
 end
-
-
-###################################################
-# Index functions
-
-@doc """
-Return a matrix of indices that can be used to index into a linearization
-of the upper diagonal of a matrix.
-""" ->
-function make_ud_index_matrix(k::Int64)
-	ud_mat = Array(Int64, (k, k))
-	for k1=1:k, k2=1:k
-		ud_mat[k1, k2] =
-			(k1 <= k2 ? (k1 + (k2 - 1) * k2 / 2) :
-				        (k2 + (k1 - 1) * k1 / 2))
-	end
-	ud_mat
-end
-
-@doc """
-Convert the upper diagonal of a matrix to a vector using the indieces of ud_ind.
-""" ->
-function linearize_matrix(mat::Matrix{Float64}, ud_ind::Matrix{Int64})
-	k_ud = maximum(ud_ind)
-	k_tot = size(ud_ind, 1)
-
-	mat_lin = Array(Float64, k_ud)
-	for k1=1:k_tot, k2=1:k1
-		mat_lin[ud_ind[k1, k2]] = mat[k1, k2]
-	end
-	mat_lin
-end
-
-@doc """
-Get a matrix size from the number of upper triangular elements.
-""" ->
-function linearized_matrix_size(k_ud::Int64)
-	k_tot = 0.5 * (sqrt(1 + 8 * k_ud) - 1)
-	k_tot_int = int(k_tot)
-	@assert int(k_tot) == k_tot
-	k_tot_int
-end
-
 
 @doc """
 Turn a vector of upper diagonal enries back into a symmetric matrix.

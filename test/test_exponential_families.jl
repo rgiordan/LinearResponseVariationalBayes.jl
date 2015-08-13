@@ -1,6 +1,6 @@
 
 using Base.Test
-using JuMPVariationalBayes.ExponentialFamilies
+using LinearResponseVariationalBayes.ExponentialFamilies
 import Distributions
 
 println("Testing ExponentialFamilies.")

@@ -1,6 +1,6 @@
 
 using Base.Test
-using JuMPVariationalBayes.SubModels
+using LinearResponseVariationalBayes.SubModels
 using JuMP
 
 println("Testing SubModels.")

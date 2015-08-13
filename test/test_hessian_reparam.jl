@@ -1,5 +1,5 @@
 
-using JuMPVariationalBayes
+using LinearResponseVariationalBayes
 using HessianReparameterization
 using Base.Test
 

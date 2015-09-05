@@ -99,7 +99,7 @@ ModelIndices(model_params::IndexDict, moment_params::IndexDict,
   num_transformed_indices =
     sum(Int64[ length(indices) for (param, indices) in trans_output ])
 
-  ModelIndices(model_params, moment_params
+  ModelIndices(model_params, moment_params,
 	             model_const, moment_const, trans_input, trans_output,
                num_moment_indices, num_const_indices, num_transformed_indices)
 end

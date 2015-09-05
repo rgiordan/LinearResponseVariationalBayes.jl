@@ -1,4 +1,7 @@
-# JuMPVariationalBayes
+# LinearResponseVariationalBayes
 
-Utilities for building Variational Bayes models using autodifferentiation tools provided by the JuMP package,
-with a special emphasis on tools for linear response Variational Bayes estimators.
+Helpful utilities for fitting linear response variational Bayes models in Julia,
+with an emphasis on using JuMP.jl for automatic differentiation.
+
+#[![Build Status](https://travis-ci.org/rgiordan/LinearResponseVariationalBayes.jl.svg?branch=master)](https://travis-ci.org/rgiordan/LinearResponseVariationalBayes.jl)
+#[![Coverage Status](https://coveralls.io/repos/rgiordan/LinearResponseVariationalBayes.jl/badge.svg?branch=master)](https://coveralls.io/r/rgiordan/LinearResponseVariationalBayes.jl?branch=master)

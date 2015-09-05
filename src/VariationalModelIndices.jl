@@ -87,11 +87,11 @@ ModelIndices(model_params::IndexDict, moment_params::IndexDict,
              trans_input::IndexDict, trans_output::IndexDict) = begin
 
   for key in keys(trans_input)
-    @assert haskey(model_params, key)
+    @assert haskey(model_params, key)  "Missing key $(key) from model_params"
   end
 
   for key in keys(trans_output)
-    @assert haskey(moment_params, key)
+    @assert haskey(moment_params, key) "Missing key $(key) from moment_params"
   end
 
   num_moment_indices = maximum([ maximum(val) for val in values(moment_params) ])
@@ -99,7 +99,8 @@ ModelIndices(model_params::IndexDict, moment_params::IndexDict,
   num_transformed_indices =
     sum(Int64[ length(indices) for (param, indices) in trans_output ])
 
-  ModelIndices(model_params, moment_params, model_const, moment_const, trans_input, trans_output,
+  ModelIndices(model_params, moment_params
+	             model_const, moment_const, trans_input, trans_output,
                num_moment_indices, num_const_indices, num_transformed_indices)
 end
 

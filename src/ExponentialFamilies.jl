@@ -7,10 +7,12 @@ VERSION < v"0.4.0-dev" && using Docile
 
 export sparse_mat_from_tuples
 export MatrixTuple
-export make_ud_index_matrix, linearize_matrix, unpack_ud_matrix, unpack_ud_trace_coefficients
+export make_ud_index_matrix, linearize_matrix
+export unpack_ud_matrix, unpack_ud_trace_coefficients
 export get_mvn_parameters_from_derivs, get_mvn_variational_covariance
 export wishart_entropy, wishart_e_log_det, get_wishart_variational_covariance
-export get_wishart_sufficient_stats_variational_covariance, get_wishart_parameters_from_derivs
+export get_wishart_sufficient_stats_variational_covariance
+export get_wishart_parameters_from_derivs
 
 # Multivariate log gamma related functions.
 function multivariate_trigamma{T <: Number}(x::T, p::Int64)
@@ -171,10 +173,13 @@ Args:
 Returns:
 	- E(beta), Cov(beta)
 """ ->
-function get_mvn_parameters_from_derivs(beta_deriv::Array{Float64}, beta2_deriv::Array{Float64})
+function get_mvn_parameters_from_derivs(
+		beta_deriv::Array{Float64}, beta2_deriv::Array{Float64})
 	k_tot = length(beta_deriv)
 	@assert length(beta2_deriv) == k_tot * (k_tot + 1) / 2
-	beta_dist = Distributions.MvNormalCanon(beta_deriv, -2 * unpack_ud_trace_coefficients(beta2_deriv))
+	beta_dist =
+		Distributions.MvNormalCanon(
+			beta_deriv, -2 * unpack_ud_trace_coefficients(beta2_deriv))
 	mean(beta_dist), cov(beta_dist)
 end
 
@@ -183,11 +188,14 @@ Get the normal covariance for a scalar normal with expectation
 beta_mean, expecation of the square beta2_mean, and in columns
 beta_ind_model and beta2_ind_model respectively.
 """ ->
-function get_normal_variational_covariance(beta_mean, beta2_mean, beta_ind_model, beta2_ind_model)
+function get_normal_variational_covariance(
+		beta_mean, beta2_mean, beta_ind_model, beta2_ind_model)
 
 	norm_cov = MatrixTuple[]
 
 	norm_var = beta2_mean - beta_mean ^ 2
+	@assert norm_var >= 0.0
+
 	# Get the linear term variance
 	push!(norm_cov, (beta_ind_model, beta_ind_model, norm_var))
 
@@ -210,7 +218,8 @@ end
 @doc """
 The covariance of wishart distributed random variables.
 """ ->
-function get_wishart_variational_covariance(v0::Matrix{Float64}, wn::Float64, ud_ind::Matrix{Int64})
+function get_wishart_variational_covariance(
+		v0::Matrix{Float64}, wn::Float64, ud_ind::Matrix{Int64})
 	@assert size(v0, 1) == size(v0, 2)
 	k_tot = size(v0, 1)
 	k_ud = int(k_tot * (k_tot + 1) / 2)
@@ -245,8 +254,8 @@ end
 @doc """
 The covariance matrix of the sufficient statistics of a wishart distribution.
 """ ->
-function get_wishart_sufficient_stats_variational_covariance(v0::Matrix{Float64}, wn::Float64,
-	                                                           lambda_i, log_det_lambda_i, ud_ind)
+function get_wishart_sufficient_stats_variational_covariance(
+		v0::Matrix{Float64}, wn::Float64, lambda_i, log_det_lambda_i, ud_ind)
 	@assert size(v0, 1) == size(v0, 2) == size(ud_ind, 1) == size(ud_ind, 2)
 	k_tot = size(v0, 1)
 	k_ud = k_tot * (k_tot + 1) / 2
@@ -299,7 +308,9 @@ function wishart_entropy(wn::Float64, v0_inv::Matrix{Float64}, k_tot::Int64)
 end
 
 
-function get_wishart_parameters_from_derivs(lambda_deriv::Matrix{Float64}, log_det_lambda_deriv::Float64)
+function get_wishart_parameters_from_derivs(
+		lambda_deriv::Matrix{Float64}, log_det_lambda_deriv::Float64)
+
 	@assert size(lambda_deriv, 1) == size(lambda_deriv, 2)
 	k_tot = size(lambda_deriv, 1)
 	wn = 2. * log_det_lambda_deriv + 1. + k_tot
@@ -313,7 +324,9 @@ end
 ###################################################
 # Gamma distribution functions
 
-function get_gamma_parameters_from_derivs(tau_deriv::Float64, log_tau_deriv::Float64)
+function get_gamma_parameters_from_derivs(
+		tau_deriv::Float64, log_tau_deriv::Float64)
+
 	tau_alpha = log_tau_deriv + 1
 	tau_beta = -tau_deriv
 
@@ -339,7 +352,8 @@ end
 
 
 function gamma_entropy(tau_alpha::Float64, tau_beta::Float64)
-	tau_alpha - log(tau_beta) + lgamma(tau_alpha) + (1 - tau_alpha) * digamma(tau_alpha)
+	tau_alpha - log(tau_beta) + lgamma(tau_alpha) +
+		(1 - tau_alpha) * digamma(tau_alpha)
 end
 
 

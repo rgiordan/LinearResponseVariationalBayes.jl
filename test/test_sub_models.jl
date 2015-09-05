@@ -56,4 +56,43 @@ function test_sub_models()
   @test_approx_eq(jo_sub.colval[z_col], 0.0)
 end
 
+
+function test_sub_model_optimization()
+  m = Model()
+  @defVar(m, x)
+  @defVar(m, y)
+  @defVar(m, z)
+
+  setValue(x, 1.0)
+  setValue(y, 2.0)
+  setValue(z, 3.0)
+
+  @defNLExpr(obj, x^2 * y - x * z + z ^ 2)
+  @setNLObjective(m, Min, obj)
+
+  getValue(obj)
+
+  jo_full = JuMPObjective(m)
+
+  z_col = z.col
+  x_col = x.col
+  sub_vars = Bool[ false for i=1:length(m.colVal)]
+  sub_vars[[z_col, x_col]] = true
+  jo_sub = JuMPObjective(m, "sub", sub_vars)
+
+  param_val = Float64[5, 6, 7]
+  z_final, val_final, optim_res =
+    optimize_subobjective(param_val, jo_sub, method=:Optim)
+  @test_approx_eq_eps z_final [0., 0.] 1e-6
+  @test_approx_eq_eps val_final 0. 1e-6
+
+  param_val = Float64[5, 6, 7]
+  z_final, val_final, nlsolve_res =
+    optimize_subobjective(param_val, jo_sub, method=:NLsolve)
+  @test_approx_eq_eps z_final [0., 0.] 1e-6
+  @test_approx_eq_eps val_final 0. 1e-6
+
+end
+
+
 test_sub_models()

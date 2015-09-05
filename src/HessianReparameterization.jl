@@ -10,15 +10,16 @@ using VariationalModelIndices
 VERSION < v"0.4.0-dev" && using Docile
 
 export transform_hessian, get_moment_hess
-export get_dx_dy_func, get_d2x_dy2_funcs, get_d2x_dy2, get_df_dy_func, get_d2f_dy2_func
+export get_dx_dy_func, get_d2x_dy2_funcs, get_d2x_dy2
+export get_df_dy_func, get_d2f_dy2_func
 
 @doc """
 Use forward differentiation to get a jacobian from a variable transformation
 function.
 
 Args:
-	- y_to_x: A function that takes a vector y to a vector x.   Note that it must take
-	          generic numeric vectors to numeric vectors.
+	- y_to_x: A function that takes a vector y to a vector x.
+	          Note that it must map generic numeric vectors to numeric vectors.
 	- K: The size of the vectors
 
 Returns:
@@ -34,7 +35,8 @@ function get_dx_dy_func(y_to_x::Function, K::Int64)
 	dx_dy_func_transpose = ForwardDiff.forwarddiff_jacobian(y_to_x!, Float64,
 		fadtype=:dual, n=K, m=K)
 
-	# The default order is transposed relative to the index notation in transform_hessian.
+	# The default order is transposed relative to the index notation in
+	# transform_hessian.
 	function dx_dy_func(y)
 		dx_dy_func_transpose(y)'
 	end
@@ -154,7 +156,8 @@ function get_moment_hess(model_params::Vector{Float64},
 	d2f_dx2_A1 = d2f_dx2_1A';
 
 	# Populate the hessian with respect to the moment parameters.
-	moment_hess = zeros(Float64, indices.num_moment_indices, indices.num_moment_indices);
+	moment_hess =
+		zeros(Float64, indices.num_moment_indices, indices.num_moment_indices);
 	for param0_row in untransformed_param_keys
 		param0_row_indices = indices.model_params[param0_row]
 		moment0_row_indices = indices.moment_params[param0_row]
@@ -192,7 +195,8 @@ function get_moment_hess(model_params::Vector{Float64},
 
 	# Finally, get the submatrices corresponding to the "constant" parameters
 	# (the priors and the data).
-	const_param_hess = zeros(Float64, indices.num_const_indices, indices.num_moment_indices);
+	const_param_hess =
+		zeros(Float64, indices.num_const_indices, indices.num_moment_indices);
 	const_params = keys(indices.model_const)
 	@assert collect(keys(indices.model_const)) == collect(keys(indices.moment_const))
 

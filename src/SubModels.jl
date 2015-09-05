@@ -9,9 +9,11 @@ VERSION < v"0.4.0-dev" && using Docile
 import MathProgBase
 import ReverseDiffSparse
 import Optim
+import NLsolve
 
 export JuMPObjective
-export get_objective_val, get_objective_deriv!, get_objective_hess!
+export get_objective_val, get_objective_deriv
+export get_objective_deriv!, get_objective_hess!
 export optimize_subobjective
 
 @doc """
@@ -38,7 +40,8 @@ type JuMPObjective
 
 end
 
-JuMPObjective(m::Model) = JuMPObjective(m, "model", Bool[true for i in 1:length(m.colVal)])
+JuMPObjective(m::Model) =
+	JuMPObjective(m, "model", Bool[true for i in 1:length(m.colVal)])
 
 JuMPObjective(m::Model, name::ASCIIString, vars::Array{Bool, 1}) = begin
 	colval = m.colVal
@@ -58,10 +61,12 @@ JuMPObjective(m::Model, name::ASCIIString, vars::Array{Bool, 1}) = begin
 
 	n_params = sum(vars)
 
-	JuMPObjective(name, m, m_eval, vars, colval, hess_struct, hess_vec, numconstr, n_params, grad)
+	JuMPObjective(name, m, m_eval, vars, colval, hess_struct,
+	              hess_vec, numconstr, n_params, grad)
 end
 
-JuMPObjective(m::Model, m_eval::JuMP.JuMPNLPEvaluator, name::ASCIIString, vars::Array{Bool, 1}) = begin
+JuMPObjective(m::Model, m_eval::JuMP.JuMPNLPEvaluator,
+              name::ASCIIString, vars::Array{Bool, 1}) = begin
 	colval = m.colVal
 
 	m_const_mat = JuMP.prepConstrMatrix(m);
@@ -77,14 +82,16 @@ JuMPObjective(m::Model, m_eval::JuMP.JuMPNLPEvaluator, name::ASCIIString, vars::
 
 	n_params = sum(vars)
 
-	JuMPObjective(name, m, m_eval, vars, colval, hess_struct, hess_vec, numconstr, n_params, grad)
+	JuMPObjective(name, m, m_eval, vars, colval, hess_struct, hess_vec,
+	              numconstr, n_params, grad)
 end
 
 
 @doc """
 z_par should be of length sum(jo.vars).
 """ ->
-function get_objective_val(z_par::Array{Float64, 1}, jo::JuMPObjective; verbose=false)
+function get_objective_val(
+		z_par::Array{Float64, 1}, jo::JuMPObjective; verbose=false)
 	@assert length(z_par) == jo.n_params
 	jo.colval[jo.vars] = z_par
 	obj_val = jo.m_eval.eval_f_nl(jo.colval)
@@ -107,9 +114,18 @@ end
 @doc """
 Calculates the derivative only with respect to changeable variables.
 """ ->
-function get_objective_deriv!(z_par::Array{Float64, 1}, jo::JuMPObjective, grad::Array{Float64, 1})
+function get_objective_deriv(z_par::Array{Float64, 1}, jo::JuMPObjective)
 	get_full_objective_deriv!(z_par, jo)
-	grad[:] = jo.grad[jo.vars]
+	jo.grad[jo.vars]
+end
+
+
+@doc """
+Calculates the derivative only with respect to changeable variables.
+""" ->
+function get_objective_deriv!(
+		z_par::Array{Float64, 1}, jo::JuMPObjective, grad::Array{Float64, 1})
+	grad[:] = get_objective_deriv(z_par, jo)
 end
 
 @doc """
@@ -122,7 +138,8 @@ function get_objective_hess(z_par::Array{Float64, 1}, jo::JuMPObjective)
 		                        jo.colval, 1.0, zeros(jo.numconstr))
 	this_hess_ld = sparse(jo.hess_struct[1], jo.hess_struct[2],
 		                  jo.hess_vec, length(jo.colval), length(jo.colval))
-	this_hess = full(this_hess_ld + this_hess_ld' - sparse(diagm(diag(this_hess_ld))))
+	this_hess =
+		full(this_hess_ld + this_hess_ld' - sparse(diagm(diag(this_hess_ld))))
 	this_hess[jo.vars, jo.vars]
 end
 
@@ -138,17 +155,24 @@ end
 From an initial value of z_init for all the variables in m, optimize
 the variables associated with the sub-objective jo.
 """ ->
-function optimize_subobjective(z_init::Array{Float64, 1}, jo::JuMPObjective;
-	                           scale=1.0, hess_reg=0.0, show_trace=false, iterations=5)
+function optimize_subobjective(
+		z_init::Array{Float64, 1}, jo::JuMPObjective;
+    scale=1.0, hess_reg=0.0, show_trace=false, iterations=5, method=:Optim)
+
+	@assert(method == :Optim || method == :NLsolve,
+	        "Method must be :Optim or :NLsolve")
 	@assert length(z_init) == length(jo.colval)
 	z_par = z_init[jo.vars]
 	jo.colval = z_init
 	function get_local_objective_val(z_par)
-		scale * get_objective_val(z_par, jo)
+		val = scale * get_objective_val(z_par, jo)
+		show_trace && println("Value at $(z_par): $(val)")
+		val
 	end
 	function get_local_objective_deriv!(z_par, grad)
 		get_objective_deriv!(z_par, jo, grad)
 		grad[:] = grad * scale
+		show_trace && println("Gradient at $(z_par): $(grad)")
 	end
 	function get_local_objective_hess!(z_par, hess)
 		if hess_reg < Inf
@@ -157,15 +181,25 @@ function optimize_subobjective(z_init::Array{Float64, 1}, jo::JuMPObjective;
 		else
 			hess[:, :] = scale * eye(length(z_par))
 		end
+		show_trace && println("Hessian at $(z_par): $(hess)")
 	end
-	optim_res = Optim.optimize(get_local_objective_val,
-		                         get_local_objective_deriv!,
-		                         get_local_objective_hess!,
-		                         z_par, method=:newton, show_trace=show_trace,
-														 iterations=iterations)
-	z_final = z_init
-	z_final[jo.vars] = optim_res.minimum
-	z_final, optim_res.f_minimum, optim_res
+
+	if method == :Optim
+		optim_res = Optim.optimize(get_local_objective_val,
+			                         get_local_objective_deriv!,
+			                         get_local_objective_hess!,
+			                         z_par, method=:newton_tr, show_trace=show_trace,
+															 iterations=iterations)
+		z_final = z_init
+		z_final[jo.vars] = optim_res.minimum
+		return z_final, optim_res.f_minimum, optim_res
+	elseif method == :NLsolve
+		nlsolve_res =
+			NLsolve.nlsolve(get_local_objective_deriv!, get_local_objective_hess!,
+			                z_par, method=:trust_region)
+		val = get_local_objective_val(nlsolve_res.zero)
+		return nlsolve_res.zero, val, nlsolve_res
+	end
 end
 
 

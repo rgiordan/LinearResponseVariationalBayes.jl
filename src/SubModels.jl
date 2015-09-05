@@ -46,8 +46,8 @@ JuMPObjective(m::Model) =
 JuMPObjective(m::Model, name::ASCIIString, vars::Array{Bool, 1}) = begin
 	colval = m.colVal
 
-	m_const_mat = JuMP.prepConstrMatrix(m);
-	m_eval = JuMP.JuMPNLPEvaluator(m, m_const_mat);
+	#m_const_mat = JuMP.prepConstrMatrix(m);
+	m_eval = JuMP.JuMPNLPEvaluator(m);
 	MathProgBase.initialize(m_eval, [:ExprGraph, :Grad, :Hess])
 
 	# Structures for the hessian.

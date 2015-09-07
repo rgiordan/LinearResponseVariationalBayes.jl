@@ -4,7 +4,7 @@ Docile
 DualNumbers
 JuMP
 MathProgBase
-NLSolve
+NLsolve
 Optim
 ReverseDiffSparse
 

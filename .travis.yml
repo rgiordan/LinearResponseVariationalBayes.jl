@@ -9,7 +9,7 @@ notifications:
 
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("LinearReponseVariationalBayes"); Pkg.test("LinearReponseVariationalBayes"; coverage=true)'
+  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("LinearResponseVariationalBayes"); Pkg.test("LinearResponseVariationalBayes"; coverage=true)'
 
 after_success:
-  - julia -e 'cd(Pkg.dir("LinearReponseVariationalBayes")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  - julia -e 'cd(Pkg.dir("LinearResponseVariationalBayes")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'

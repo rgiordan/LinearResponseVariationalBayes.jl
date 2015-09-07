@@ -1,8 +1,10 @@
 julia 0.3
 Distributions
 Docile
+DualNumbers
 JuMP
 MathProgBase
+NLSolve
 Optim
 ReverseDiffSparse
 

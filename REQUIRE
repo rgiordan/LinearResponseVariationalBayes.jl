@@ -9,6 +9,6 @@ NLsolve
 Optim
 ReverseDiffSparse
 
-# Currently the package also requires the lgamma_FADHessian branch of
-# the ForwardDiff package found in the rgiordan fork.
-
+# If not using julia 0.4, you may also want to check out commit 5418e4
+# of ForwardDiff.jl, which includes the capability to compute Hessians
+# involving the lgamma() function.

@@ -159,8 +159,9 @@ function optimize_subobjective(
 		z_init::Array{Float64, 1}, jo::JuMPObjective;
     scale=1.0, hess_reg=0.0, show_trace=false, iterations=5, method=:Optim)
 
-	@assert(method == :Optim || method == :NLsolve,
-	        "Method must be :Optim or :NLsolve")
+	# TODO: clean up the method names.
+	@assert(method == :Optim || method == :NLsolve || method == :newton_tr,
+	        "Method must be :Optim, :NLsolve, or :newton_tr")
 	@assert length(z_init) == length(jo.colval)
 	z_par = z_init[jo.vars]
 	jo.colval = z_init
@@ -188,7 +189,18 @@ function optimize_subobjective(
 		optim_res = Optim.optimize(get_local_objective_val,
 			                         get_local_objective_deriv!,
 			                         get_local_objective_hess!,
-			                         z_par, method=:newton_tr, show_trace=show_trace,
+			                         z_par, method=:newton,
+															 show_trace=show_trace,
+															 iterations=iterations)
+		z_final = z_init
+		z_final[jo.vars] = optim_res.minimum
+		return z_final, optim_res.f_minimum, optim_res
+	elseif method == :newton_tr
+		optim_res = Optim.optimize(get_local_objective_val,
+															 get_local_objective_deriv!,
+															 get_local_objective_hess!,
+															 z_par, method=:newton_tr,
+															 show_trace=show_trace,
 															 iterations=iterations)
 		z_final = z_init
 		z_final[jo.vars] = optim_res.minimum
@@ -199,6 +211,8 @@ function optimize_subobjective(
 			                z_par, method=:trust_region)
 		val = get_local_objective_val(nlsolve_res.zero)
 		return nlsolve_res.zero, val, nlsolve_res
+	else
+		error("Unknown method $method")
 	end
 end
 

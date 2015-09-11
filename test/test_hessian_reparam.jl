@@ -129,4 +129,4 @@ test_hessian_reparameterization()
 
 # This is failing due to the fact that ForwardDiff never tagged a version
 # between 5418e4 and v0.1.0, which requires Julia 0.4.
-#test_lgamma_hessian_reparameterization()
+test_lgamma_hessian_reparameterization()

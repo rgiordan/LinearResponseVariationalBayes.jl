@@ -2,7 +2,7 @@ julia 0.3
 Distributions
 Docile
 DualNumbers
-ForwardDiff 0.0.2-
+ForwardDiff 0.0.3
 JuMP
 MathProgBase
 NLsolve

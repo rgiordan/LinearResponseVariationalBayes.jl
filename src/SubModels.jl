@@ -75,8 +75,8 @@ JuMPObjective(m::Model, m_eval::JuMP.JuMPNLPEvaluator,
 	hess_struct = MathProgBase.hesslag_structure(m_eval);
 	hess_vec = zeros(length(hess_struct[1]));
 	numconstr = (length(m_eval.m.linconstr) +
-		         length(m_eval.m.quadconstr) +
-		         length(m_eval.m.nlpdata.nlconstr))
+		           length(m_eval.m.quadconstr) +
+		           length(m_eval.m.nlpdata.nlconstr))
 
 	grad = zeros(length(m.colVal))
 
@@ -173,7 +173,7 @@ function optimize_subobjective(
 	function get_local_objective_deriv!(z_par, grad)
 		get_objective_deriv!(z_par, jo, grad)
 		grad[:] = grad * scale
-		show_trace && println("Gradient at $(z_par): $(grad)")
+		#show_trace && println("Gradient at $(z_par): $(grad)")
 	end
 	function get_local_objective_hess!(z_par, hess)
 		if hess_reg < Inf
@@ -182,7 +182,7 @@ function optimize_subobjective(
 		else
 			hess[:, :] = scale * eye(length(z_par))
 		end
-		show_trace && println("Hessian at $(z_par): $(hess)")
+		#show_trace && println("Hessian at $(z_par): $(hess)")
 	end
 
 	if method == :Optim

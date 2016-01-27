@@ -56,7 +56,7 @@ end
 
 # A tuple representing a matrix element
 # [row, column, value]
-typealias MatrixTuple (Int64, Int64, Float64)
+typealias MatrixTuple Tuple{Int64, Int64, Float64}
 
 function sparse_mat_from_tuples(tup_array::Array{MatrixTuple})
 	sparse(Int64[x[1] for x=tup_array],

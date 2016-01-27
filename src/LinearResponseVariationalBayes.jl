@@ -3,10 +3,12 @@
 
 module LinearResponseVariationalBayes
 
-require(joinpath(Pkg.dir("LinearResponseVariationalBayes"), "src", "VariationalModelIndices.jl"))
-require(joinpath(Pkg.dir("LinearResponseVariationalBayes"), "src", "ExponentialFamilies.jl"))
-require(joinpath(Pkg.dir("LinearResponseVariationalBayes"), "src", "SubModels.jl"))
-require(joinpath(Pkg.dir("LinearResponseVariationalBayes"), "src", "HessianReparameterization.jl"))
+push!(LOAD_PATH, joinpath(Pkg.dir("LinearResponseVariationalBayes"), "src"))
+
+# include(joinpath(Pkg.dir("LinearResponseVariationalBayes"), "src", "VariationalModelIndices.jl"))
+# include(joinpath(Pkg.dir("LinearResponseVariationalBayes"), "src", "ExponentialFamilies.jl"))
+# include(joinpath(Pkg.dir("LinearResponseVariationalBayes"), "src", "SubModels.jl"))
+# include(joinpath(Pkg.dir("LinearResponseVariationalBayes"), "src", "HessianReparameterization.jl"))
 
 import VariationalModelIndices
 import ExponentialFamilies

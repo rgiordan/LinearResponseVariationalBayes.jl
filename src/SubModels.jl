@@ -4,7 +4,7 @@ module SubModels
 # https://github.com/dpo/NLPModels.jl/blob/master/src/NLPModels.jl
 
 using JuMP
-VERSION < v"0.4.0-dev" && using Docile
+using Docile
 
 import MathProgBase
 import ReverseDiffSparse
@@ -30,7 +30,7 @@ type JuMPObjective
 	colval::Array{Float64}
 
 	# Stuff for the hessian
-	hess_struct::(Array{Int64,1}, Array{Int64,1})
+	hess_struct::Tuple{Array{Int64,1}, Array{Int64,1}}
 	hess_vec::Array{Float64,1}
 	numconstr::Int64
 	n_params::Int64

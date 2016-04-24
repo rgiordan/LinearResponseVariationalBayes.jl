@@ -14,10 +14,10 @@ end
 function test_wishart()
 	srand(42)
 	p = 2
-	p_ud = int(p * (p + 1) / 2)
+	p_ud = round(Int, p * (p + 1) / 2)
 	mu_sigma = eye(p) + repmat([0.2], p, p)
 	lambda = inv(mu_sigma)
-	n_draws = int(5e5)
+	n_draws = 500_000
 
 	wn = 100.
 	v0 = inv(lambda)
@@ -73,7 +73,7 @@ function test_normal()
 	mu_sigma = 0.5 * (eye(p) + repmat([0.2], p, p))
 
 	mu_dist = Distributions.MvNormal(mu_mean, mu_sigma)
-	n_draws = int(1e6)
+	n_draws = 1_000_000
 	mu_draws = rand(mu_dist, n_draws)'
 	second_order_sample_cov =
 		Float64[ cov(mu_draws[:, k1] .* mu_draws[:, k2],
@@ -114,7 +114,7 @@ function test_gamma()
 	beta = 10.0
 	gamma_dist = Distributions.Gamma(alpha, 1 / beta)
 
-	n_draws = int(1e5)
+	n_draws = 100_000
 	gamma_draws = rand(gamma_dist, n_draws)
 	gamma_suff_draws = hcat(gamma_draws, log(gamma_draws))
 

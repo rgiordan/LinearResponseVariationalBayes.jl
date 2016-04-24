@@ -16,7 +16,7 @@ function test_sub_models()
   setValue(y, 2.0)
   setValue(z, 3.0)
 
-  @defNLExpr(obj, x * y + z ^ 2)
+  @defNLExpr(m, obj, x * y + z ^ 2)
   @setNLObjective(m, Min, obj)
 
   getValue(obj)
@@ -67,7 +67,7 @@ function test_sub_model_optimization()
   setValue(y, 2.0)
   setValue(z, 3.0)
 
-  @defNLExpr(obj, x^2 * y - x * z + z ^ 2)
+  @defNLExpr(m, obj, x^2 * y - x * z + z ^ 2)
   @setNLObjective(m, Min, obj)
 
   getValue(obj)

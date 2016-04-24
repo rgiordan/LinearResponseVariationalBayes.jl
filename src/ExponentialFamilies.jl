@@ -222,7 +222,7 @@ function get_wishart_variational_covariance(
 		v0::Matrix{Float64}, wn::Float64, ud_ind::Matrix{Int64})
 	@assert size(v0, 1) == size(v0, 2)
 	k_tot = size(v0, 1)
-	k_ud = int(k_tot * (k_tot + 1) / 2)
+	k_ud = round(Int, k_tot * (k_tot + 1) / 2)
 	w_cov = Array(Float64, k_ud, k_ud)
 
 	for j1=1:k_tot, i1=1:j1, j2=1:k_tot, i2=1:j2

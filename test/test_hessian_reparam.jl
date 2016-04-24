@@ -11,13 +11,13 @@ function test_hessian_reparameterization()
 	K = 2
 	a = 1.5
 
-	function f(y)
+	function f{T <: Number}(y::Array{T})
 		y[1]^3 + y[2]^2 + a * y[1] * y[2]
 	end
 
-	function y_to_x(y)
-		[ y[1] * y[2],
-		  y[1] + y[2]]
+	function y_to_x{T <: Number}(y::Array{T})
+		T[ y[1] * y[2],
+		   y[1] + y[2]]
 	end
 
 	dx_dy_func = get_dx_dy_func(y_to_x, K)
@@ -35,7 +35,7 @@ function test_hessian_reparameterization()
 	d2f_dx2 = transform_hessian(dx_dy, d2x_dy2, df_dy, d2f_dy2)
 
 	# Test with numeric derivatives.
-	function df_dx_func(y)
+	function df_dx_func{T <: Number}(y::Array{T})
 		dx_dy_func(y) \ df_dy_func(y)
 	end
 
@@ -71,11 +71,11 @@ function test_lgamma_hessian_reparameterization()
 	K = 2
 	a = 1.5
 
-	function f(y)
+	function f{T <: Number}(y::Array{T})
 		y[1]^3 + y[2]^2 + a * y[1] * y[2]
 	end
 
-	function y_to_x(y)
+	function y_to_x{T <: Number}(y::Array{T})
 		[ lgamma(0.1 * y[1] + 0.9 * y[2]),
 		  digamma(0.9 * y[1] + 0.1 * y[2]) ]
 	end
@@ -95,7 +95,7 @@ function test_lgamma_hessian_reparameterization()
 	d2f_dx2 = transform_hessian(dx_dy, d2x_dy2, df_dy, d2f_dy2)
 
 	# Test with numeric derivatives.
-	function df_dx_func(y)
+	function df_dx_func{T <: Number}(y::Aray{T})
 		dx_dy_func(y) \ df_dy_func(y)
 	end
 

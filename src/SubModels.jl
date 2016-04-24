@@ -27,7 +27,7 @@ type JuMPObjective
 	# Which variables have nonzero derivatives.
 	vars::Array{Bool, 1}
 
-	colval::Array{Float64}
+	colVal::Array{Float64}
 
 	# Stuff for the hessian
 	hess_struct::Tuple{Array{Int64,1}, Array{Int64,1}}
@@ -43,7 +43,7 @@ JuMPObjective(m::Model) =
 	JuMPObjective(m, "model", Bool[true for i in 1:length(m.colVal)])
 
 JuMPObjective(m::Model, name::ASCIIString, vars::Array{Bool, 1}) = begin
-	colval = m.colVal
+	colVal = m.colVal
 
 	#m_const_mat = JuMP.prepConstrMatrix(m);
 	m_eval = JuMP.JuMPNLPEvaluator(m);
@@ -53,20 +53,20 @@ JuMPObjective(m::Model, name::ASCIIString, vars::Array{Bool, 1}) = begin
 	hess_struct = MathProgBase.hesslag_structure(m_eval);
 	hess_vec = zeros(length(hess_struct[1]));
 	numconstr = (length(m_eval.m.linconstr) +
-		         length(m_eval.m.quadconstr) +
-		         length(m_eval.m.nlpdata.nlconstr))
+		           length(m_eval.m.quadconstr) +
+		           length(m_eval.m.nlpdata.nlconstr))
 
 	grad = zeros(length(m.colVal))
 
 	n_params = sum(vars)
 
-	JuMPObjective(name, m, m_eval, vars, colval, hess_struct,
+	JuMPObjective(name, m, m_eval, vars, colVal, hess_struct,
 	              hess_vec, numconstr, n_params, grad)
 end
 
 JuMPObjective(m::Model, m_eval::JuMP.JuMPNLPEvaluator,
               name::ASCIIString, vars::Array{Bool, 1}) = begin
-	colval = m.colVal
+	colVal = m.colVal
 
 	m_const_mat = JuMP.prepConstrMatrix(m);
 
@@ -81,7 +81,7 @@ JuMPObjective(m::Model, m_eval::JuMP.JuMPNLPEvaluator,
 
 	n_params = sum(vars)
 
-	JuMPObjective(name, m, m_eval, vars, colval, hess_struct, hess_vec,
+	JuMPObjective(name, m, m_eval, vars, colVal, hess_struct, hess_vec,
 	              numconstr, n_params, grad)
 end
 
@@ -91,9 +91,12 @@ z_par should be of length sum(jo.vars).
 """ ->
 function get_objective_val(
 		z_par::Array{Float64, 1}, jo::JuMPObjective; verbose=false)
+
 	@assert length(z_par) == jo.n_params
-	jo.colval[jo.vars] = z_par
-	obj_val = jo.m_eval.eval_f_nl(jo.colval)
+	jo.m.colVal[jo.vars] = z_par
+	# jo.colVal[jo.vars] = z_par
+	# obj_val = jo.m_eval.eval_f_nl(jo.colVal)
+	obj_val = jo.m_eval(jo.m)
 	if verbose
 		println("$(jo.name) elbo: $obj_val")
 	end
@@ -105,8 +108,8 @@ Calculates the derivative with respect to all variables, even excluded ones.
 """ ->
 function get_full_objective_deriv!(z_par::Array{Float64, 1}, jo::JuMPObjective)
 	@assert length(z_par) == jo.n_params
-	jo.colval[jo.vars] = z_par
-	MathProgBase.eval_grad_f(jo.m_eval, jo.grad, jo.colval)
+	jo.colVal[jo.vars] = z_par
+	MathProgBase.eval_grad_f(jo.m_eval, jo.grad, jo.colVal)
 	jo.grad
 end
 
@@ -132,11 +135,11 @@ Returns the hessian with respect to changeable variables.
 """ ->
 function get_objective_hess(z_par::Array{Float64, 1}, jo::JuMPObjective)
 	@assert length(z_par) == jo.n_params
-	jo.colval[jo.vars] = z_par
+	jo.colVal[jo.vars] = z_par
 	MathProgBase.eval_hesslag(jo.m_eval, jo.hess_vec,
-		                        jo.colval, 1.0, zeros(jo.numconstr))
+		                        jo.colVal, 1.0, zeros(jo.numconstr))
 	this_hess_ld = sparse(jo.hess_struct[1], jo.hess_struct[2],
-		                  jo.hess_vec, length(jo.colval), length(jo.colval))
+		                  jo.hess_vec, length(jo.colVal), length(jo.colVal))
 	this_hess =
 		full(this_hess_ld + this_hess_ld' - sparse(diagm(diag(this_hess_ld))))
 	this_hess[jo.vars, jo.vars]
@@ -161,9 +164,9 @@ function optimize_subobjective(
 	# TODO: clean up the method names.
 	@assert(method == :Optim || method == :NLsolve || method == :newton_tr,
 	        "Method must be :Optim, :NLsolve, or :newton_tr")
-	@assert length(z_init) == length(jo.colval)
+	@assert length(z_init) == length(jo.colVal)
 	z_par = z_init[jo.vars]
-	jo.colval = z_init
+	jo.colVal = z_init
 	function get_local_objective_val(z_par)
 		val = scale * get_objective_val(z_par, jo)
 		show_trace && println("Value at $(z_par): $(val)")

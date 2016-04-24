@@ -26,19 +26,13 @@ Returns:
 	- A function that gets the Jacobian of the transform evaluated at y.
 """ ->
 function get_dx_dy_func(y_to_x::Function, K::Int64)
-	# The Jacobians require something that modifies its input in place.
-	function y_to_x!(y, x)
-		x[:] = y_to_x(y)
-	end
 
 	# Calculate the necessary derivatives:
-	# dx_dy_func_transpose = ForwardDiff.forwarddiff_jacobian(y_to_x!, Float64,
-	# 	fadtype=:dual, n=K, m=K)
-	dx_dy_func_transpose = ForwardDiff.jacobian(y_to_x!, mutates=false)
+	dx_dy_func_transpose = ForwardDiff.jacobian(y_to_x, mutates=false)
 
 	# The default order is transposed relative to the index notation in
 	# transform_hessian.
-	function dx_dy_func(y)
+	function dx_dy_func{T <: Number}(y::Array{T})
 		dx_dy_func_transpose(y)'
 	end
 
@@ -46,22 +40,18 @@ function get_dx_dy_func(y_to_x::Function, K::Int64)
 end
 
 function get_d2x_dy2_funcs(y_to_x::Function, K::Int64)
-	function y_to_x(y, i::Int64)
+	function y_to_x{T <: Number}(y::Array{T}, i::Int64)
 		y_to_x(y)[i]
 	end
-	# [ ForwardDiff.forwarddiff_hessian(y -> y_to_x(y, i), Float64,
-	# 	fadtype=:typed, n=K) for i=1:K ]
 	[ ForwardDiff.hessian(y -> y_to_x(y, i), mutates=false) for i=1:K ]
-
-
 end
 
 function get_df_dy_func(f::Function, K::Int64)
-	ForwardDiff.forwarddiff_gradient(f, Float64, fadtype=:dual, n=K)
+	ForwardDiff.gradient(f, mutates=false)
 end
 
 function get_d2f_dy2_func(f::Function, K::Int64)
-	ForwardDiff.forwarddiff_hessian(f, Float64, fadtype=:typed, n=K)
+	ForwardDiff.hessian(f, mutates=false)
 end
 
 function get_d2x_dy2(d2x_dy2_funcs::Array{Function}, y::Array{Float64, 1})
@@ -71,7 +61,7 @@ function get_d2x_dy2(d2x_dy2_funcs::Array{Function}, y::Array{Float64, 1})
 end
 
 function transform_hessian(dx_dy::Array{Float64, 2}, d2x_dy2::Array{Float64, 3},
-	                       df_dy::Array{Float64, 1}, d2f_dy2::Array{Float64, 2})
+	                         df_dy::Array{Float64, 1}, d2f_dy2::Array{Float64, 2})
 	# Input variables:
 	#   dx_dy[i, j] = dx[i] / dy[j]
 	#   d2x_dy2[i, j, k] = d2 x[k] / (dy[i] dy[j])

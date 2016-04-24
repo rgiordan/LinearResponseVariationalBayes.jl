@@ -32,8 +32,9 @@ function get_dx_dy_func(y_to_x::Function, K::Int64)
 	end
 
 	# Calculate the necessary derivatives:
-	dx_dy_func_transpose = ForwardDiff.forwarddiff_jacobian(y_to_x!, Float64,
-		fadtype=:dual, n=K, m=K)
+	# dx_dy_func_transpose = ForwardDiff.forwarddiff_jacobian(y_to_x!, Float64,
+	# 	fadtype=:dual, n=K, m=K)
+	dx_dy_func_transpose = ForwardDiff.jacobian(y_to_x!, mutates=false)
 
 	# The default order is transposed relative to the index notation in
 	# transform_hessian.
@@ -48,8 +49,11 @@ function get_d2x_dy2_funcs(y_to_x::Function, K::Int64)
 	function y_to_x(y, i::Int64)
 		y_to_x(y)[i]
 	end
-	[ ForwardDiff.forwarddiff_hessian(y -> y_to_x(y, i), Float64,
-		fadtype=:typed, n=K) for i=1:K ]
+	# [ ForwardDiff.forwarddiff_hessian(y -> y_to_x(y, i), Float64,
+	# 	fadtype=:typed, n=K) for i=1:K ]
+	[ ForwardDiff.hessian(y -> y_to_x(y, i), mutates=false) for i=1:K ]
+
+
 end
 
 function get_df_dy_func(f::Function, K::Int64)

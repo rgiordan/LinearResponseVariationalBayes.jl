@@ -37,7 +37,6 @@ type JuMPObjective
 
 	# An in-place gradient
 	grad::Array{Float64, 1}
-
 end
 
 JuMPObjective(m::Model) =

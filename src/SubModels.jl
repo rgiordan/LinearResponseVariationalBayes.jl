@@ -93,10 +93,9 @@ function get_objective_val(
 		z_par::Array{Float64, 1}, jo::JuMPObjective; verbose=false)
 
 	@assert length(z_par) == jo.n_params
-	jo.m.colVal[jo.vars] = z_par
-	# jo.colVal[jo.vars] = z_par
-	# obj_val = jo.m_eval.eval_f_nl(jo.colVal)
-	obj_val = jo.m_eval(jo.m)
+	# jo.m.colVal[jo.vars] = z_par
+	jo.colVal[jo.vars] = z_par
+	obj_val = jo.m_eval.eval_f_nl(jo.colVal)
 	if verbose
 		println("$(jo.name) elbo: $obj_val")
 	end

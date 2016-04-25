@@ -16,7 +16,7 @@ function test_sub_models()
   setValue(y, 2.0)
   setValue(z, 3.0)
 
-  @defNLExpr(m, obj, x * y + z ^ 2)
+  @defNLExpr(obj, x * y + z ^ 2)
   @setNLObjective(m, Min, obj)
 
   getValue(obj)
@@ -53,7 +53,7 @@ function test_sub_models()
   @test_approx_eq(full_hess[z_col, z_col], sub_hess)
 
   optimize_subobjective(param_val, jo_sub)
-  @test_approx_eq(jo_sub.colval[z_col], 0.0)
+  @test_approx_eq(jo_sub.colVal[z_col], 0.0)
 end
 
 
@@ -67,7 +67,7 @@ function test_sub_model_optimization()
   setValue(y, 2.0)
   setValue(z, 3.0)
 
-  @defNLExpr(m, obj, x^2 * y - x * z + z ^ 2)
+  @defNLExpr(obj, x^2 * y - x * z + z ^ 2)
   @setNLObjective(m, Min, obj)
 
   getValue(obj)

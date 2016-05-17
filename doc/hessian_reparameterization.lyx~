@@ -111,9 +111,9 @@ And
 \begin{eqnarray*}
 \frac{d^{2}f}{dXdX_{j}} & = & \frac{d}{dX_{j}}K^{T}f_{y}\\
  & = & \left(\frac{dK^{T}}{dX_{j}}\right)f_{y}+K^{T}\left(\frac{df_{y}^{T}}{dX_{j}}\right)^{T}\\
- & = & \left(\frac{d}{dX_{j}}\left(J^{-1}\right)^{T}\right)f_{y}+K^{T}\left(\left(K^{T}\frac{df_{y}^{T}}{dY}\right)_{j\left(\cdot\right)}\right)^{T}\\
- & = & -\left(\left(J^{-1}\right)^{T}\frac{dJ^{T}}{dX_{j}}\left(J^{-1}\right)^{T}\right)f_{y}+\left(K^{T}\left(f_{YY}K\right)_{\left(\cdot\right)j}\right)\\
- & = & -K^{T}\frac{dJ^{T}}{dX_{j}}K^{T}f_{y}+\left(K^{T}f_{YY}K\right)_{\left(\cdot\right)j}
+ & = & \left(\frac{d}{dX_{j}}\left(J^{-1}\right)\right)^{T}f_{y}+K^{T}\left(\left(K^{T}\frac{df_{y}^{T}}{dY}\right)_{j\left(\cdot\right)}\right)^{T}\\
+ & = & -\left(\left(J^{-1}\right)\frac{dJ}{dX_{j}}\left(J^{-1}\right)\right)^{T}f_{y}+\left(K^{T}\left(f_{YY}K\right)_{\left(\cdot\right)j}\right)\\
+ & = & -\left(K\frac{dJ}{dX_{j}}K\right)^{T}f_{y}+\left(K^{T}f_{YY}K\right)_{\left(\cdot\right)j}
 \end{eqnarray*}
 
 \end_inset
@@ -122,27 +122,11 @@ And
 \end_layout
 
 \begin_layout Standard
-The first term is given by OLD, WRONG:
+The first term is given by:
 \begin_inset Formula 
 \begin{eqnarray*}
 \left(\frac{dJ}{dX_{j}}\right)_{ab} & = & \frac{d}{dX_{j}}\frac{dX_{a}}{dY_{b}}\\
  & = & \left(K\frac{d^{2}X_{a}}{dYY_{b}}\right)_{j}
-\end{eqnarray*}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-New:
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{eqnarray*}
-\left(\frac{dJ^{T}}{dX_{j}}\right)_{ab} & = & \frac{d}{dX_{j}}\frac{dX_{b}}{dY_{a}}\\
- & = & \left(K\frac{d^{2}X_{b}}{dYY_{a}}\right)_{j}
 \end{eqnarray*}
 
 \end_inset
@@ -168,6 +152,15 @@ This is written in terms of the quantities
 \end_inset
 
 .
+ Additionally, the derivative term can be written as
+\begin_inset Formula 
+\begin{eqnarray*}
+\left(K\frac{dJ}{dX_{j}}K\right)^{T}f_{y} & = & \left(K^{T}\frac{dJ^{T}}{dX_{j}}\right)\left(K^{T}f_{y}\right)\\
+\end{eqnarray*}
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section

@@ -28,13 +28,14 @@ Returns:
 function get_dx_dy_func(y_to_x::Function, K::Int64)
 
 	# Calculate the necessary derivatives:
-	dx_dy_func_transpose = ForwardDiff.jacobian(y_to_x, mutates=false)
+	dx_dy_func = ForwardDiff.jacobian(y_to_x, mutates=false)
 
-	# The default order is transposed relative to the index notation in
-	# transform_hessian.
-	function dx_dy_func{T <: Number}(y::Array{T})
-		dx_dy_func_transpose(y)'
-	end
+	# The old code transposed the Jecobian, which is misleading -- it was only
+	# correct because I accidentally also transposed the Jacobian inverse in
+	# the notes.
+	# function dx_dy_func{T <: Number}(y::Array{T})
+	# 	dx_dy_func_transpose(y)'
+	# end
 
 	return dx_dy_func
 end
@@ -63,8 +64,7 @@ end
 function transform_hessian(dx_dy::Array{Float64, 2}, d2x_dy2::Array{Float64, 3},
 	                         df_dy::Array{Float64, 1}, d2f_dy2::Array{Float64, 2})
 	# Input variables:
-	#   dx_dy[i, j] = dx[i] / dy[j] # TODO: it actually requires -- and is being
-	#                                 passsed -- dx_dy[i, j]= dx[j] / dy[i]
+	#   dx_dy[i, j] = dx[i] / dy[j]
 	#   d2x_dy2[i, j, k] = d2 x[k] / (dy[i] dy[j])
 	#   df_dy[i] = df / dy[i]
 	#   d2f_dy2[i, j] = d2f / (dy[i] dy[j])
@@ -76,18 +76,18 @@ function transform_hessian(dx_dy::Array{Float64, 2}, d2x_dy2::Array{Float64, 3},
 	@assert K == size(dx_dy, 2) == size(d2x_dy2, 1) == size(d2x_dy2, 2) ==
 	        size(df_dy, 1) == size(d2f_dy2, 1) == size(d2f_dy2, 2)
 
-	# The same as dx_dy \ d2f_dy2 * inv(dx_dy').  This is the only term
+	# The same as dx_dy' \ d2f_dy2 * inv(dx_dy).  This is the only term
 	# if you are at an optimum since in that case df_dy = 0.
-	opt_term = dx_dy \ (dx_dy \ d2f_dy2)'
+	opt_term = dx_dy' \ (dx_dy' \ d2f_dy2)'
 
-	df_dx = dx_dy \ df_dy
+	df_dx = dx_dy' \ df_dy
 
-	# This is dJ_dx[i, j, k] = dJ[i, j] / dx[k] = d / dx[k] (dx[j] / dy[i])
-	dJ_dx = Float64[ (dx_dy \ slice(d2x_dy2, :, i, j)[:])[k] for i=1:K, j=1:K, k=1:K ]
+	# This is dJ'_dx[i, j, k] = dJ[i, j] / dx[k] = d / dx[k] (dx[j] / dy[i])
+	dJt_dx = Float64[ (dx_dy' \ slice(d2x_dy2, :, i, j)[:])[k] for i=1:K, j=1:K, k=1:K ]
 
 	j_term = Array(Float64, K, K)
 	for j=1:K
-		j_term[:, j] = -(dx_dy \ slice(dJ_dx, :, :, j)[:, :]) * df_dx
+		j_term[:, j] = -(dx_dy' \ slice(dJt_dx, :, :, j)[:, :]) * df_dx
 	end
 
 	j_term + opt_term
@@ -147,7 +147,7 @@ function get_moment_hess(model_params::Vector{Float64},
 	# the mixed partials between the transformed and untransformed parameters.
 	# Note that the columns are indexed in model order, where the rows
 	# are indexed by indices.trans_output.
-	d2f_dx2_1A = dx_dy \ d2f_dy2_1A;
+	d2f_dx2_1A = dx_dy' \ d2f_dy2_1A;
 	d2f_dx2_A1 = d2f_dx2_1A';
 
 	# Populate the hessian with respect to the moment parameters.

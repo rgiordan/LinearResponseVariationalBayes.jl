@@ -40,8 +40,8 @@ Get a matrix size from the number of upper triangular elements.
 """ ->
 function linearized_matrix_size(k_ud::Int64)
 	k_tot = 0.5 * (sqrt(1 + 8 * k_ud) - 1)
-	k_tot_int = int(k_tot)
-	@assert int(k_tot) == k_tot
+	k_tot_int = round(Int, k_tot)
+	@assert round(Int, k_tot) == k_tot
 	k_tot_int
 end
 

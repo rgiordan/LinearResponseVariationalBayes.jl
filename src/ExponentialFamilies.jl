@@ -300,8 +300,8 @@ For a Wishart distribution with mean wn v0_inv^{-1},
 evaluate the entropy.
 """ ->
 function wishart_entropy(wn::Float64, v0_inv::Matrix{Float64}, k_tot::Int64)
-	0.5 * k_tot * (k_tot + 1) * log(2) +
 	-0.5 * logdet(v0_inv) * (k_tot + 1.0) +
+	0.5 * k_tot * (k_tot + 1) * log(2) +
 	multivariate_lgamma(0.5 * wn, k_tot) -
 	0.5 * (wn - k_tot - 1.0) * multivariate_digamma(0.5 * wn, k_tot) +
 	0.5 * wn * k_tot

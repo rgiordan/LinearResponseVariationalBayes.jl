@@ -81,7 +81,7 @@ This is the formula for a multivariate hessian parameter change.
 \begin{eqnarray*}
 X=t\left(Y\right) & = & \textrm{easy}\\
 J_{ij} & = & \frac{dX_{i}}{dY_{j}}\textrm{ (the Jacobian)}\\
-K_{ij} & = & \left(J^{-1}\right)_{ij}=\frac{dY_{j}}{dX_{i}}\\
+K_{ij} & = & \left(J^{-1}\right)_{ij}=\frac{dY_{i}}{dX_{j}}\\
 Y=t^{-1}\left(X\right) & = & \textrm{hard}\\
 \frac{df}{dY}\textrm{ and }\frac{d^{2}f}{dYdY^{T}} & = & \textrm{easy}\\
 \frac{df}{dX}\textrm{ and }\frac{d^{2}f}{dXdX^{T}} & = & \textrm{what we want}
@@ -96,8 +96,8 @@ Y=t^{-1}\left(X\right) & = & \textrm{hard}\\
 Then we have
 \begin_inset Formula 
 \begin{eqnarray*}
-\left(f_{X}\right)_{i}:=\frac{df}{dX_{i}} & = & \sum_{j=1}^{n}\frac{df}{dY_{j}}\frac{dY_{j}}{dX_{i}}=\sum_{j=1}^{n}K_{ij}\frac{df}{dY_{j}}=\left(Kf_{Y}\right)_{i}\\
-\frac{df}{dX}=f_{X} & = & Kf_{Y}
+\left(f_{X}\right)_{i}:=\frac{df}{dX_{i}} & = & \sum_{j=1}^{n}\frac{df}{dY_{j}}\frac{dY_{j}}{dX_{i}}=\sum_{j=1}^{n}K_{ij}^{T}\frac{df}{dY_{j}}=\left(K^{T}f_{Y}\right)_{i}\\
+\frac{df}{dX}=f_{X} & = & K^{T}f_{Y}
 \end{eqnarray*}
 
 \end_inset
@@ -109,11 +109,11 @@ Then we have
 And 
 \begin_inset Formula 
 \begin{eqnarray*}
-\frac{d^{2}f}{dXdX_{j}} & = & \frac{d}{dX_{j}}Kf_{y}\\
- & = & \left(\frac{dK}{dX_{j}}\right)f_{y}+K\left(\frac{df_{y}^{T}}{dX_{j}}\right)^{T}\\
- & = & \left(\frac{d}{dX_{j}}J^{-1}\right)f_{y}+K\left(\left(K\frac{df_{y}^{T}}{dY}\right)_{j\left(\cdot\right)}\right)^{T}\\
- & = & -\left(J^{-1}\frac{dJ}{dX_{j}}J^{-1}\right)f_{y}+\left(K\left(f_{YY}K^{T}\right)_{\left(\cdot\right)j}\right)\\
- & = & -K\frac{dJ}{dX_{j}}Kf_{y}+\left(Kf_{YY}K^{T}\right)_{\left(\cdot\right)j}
+\frac{d^{2}f}{dXdX_{j}} & = & \frac{d}{dX_{j}}K^{T}f_{y}\\
+ & = & \left(\frac{dK^{T}}{dX_{j}}\right)f_{y}+K^{T}\left(\frac{df_{y}^{T}}{dX_{j}}\right)^{T}\\
+ & = & \left(\frac{d}{dX_{j}}\left(J^{-1}\right)^{T}\right)f_{y}+K^{T}\left(\left(K^{T}\frac{df_{y}^{T}}{dY}\right)_{j\left(\cdot\right)}\right)^{T}\\
+ & = & -\left(\left(J^{-1}\right)^{T}\frac{dJ^{T}}{dX_{j}}\left(J^{-1}\right)^{T}\right)f_{y}+\left(K^{T}\left(f_{YY}K\right)_{\left(\cdot\right)j}\right)\\
+ & = & -K^{T}\frac{dJ^{T}}{dX_{j}}K^{T}f_{y}+\left(K^{T}f_{YY}K\right)_{\left(\cdot\right)j}
 \end{eqnarray*}
 
 \end_inset
@@ -122,11 +122,27 @@ And
 \end_layout
 
 \begin_layout Standard
-The first term is given by
+The first term is given by OLD, WRONG:
 \begin_inset Formula 
 \begin{eqnarray*}
 \left(\frac{dJ}{dX_{j}}\right)_{ab} & = & \frac{d}{dX_{j}}\frac{dX_{a}}{dY_{b}}\\
  & = & \left(K\frac{d^{2}X_{a}}{dYY_{b}}\right)_{j}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+New:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+\left(\frac{dJ^{T}}{dX_{j}}\right)_{ab} & = & \frac{d}{dX_{j}}\frac{dX_{b}}{dY_{a}}\\
+ & = & \left(K\frac{d^{2}X_{b}}{dYY_{a}}\right)_{j}
 \end{eqnarray*}
 
 \end_inset
@@ -353,7 +369,7 @@ K_{1}\frac{\partial f}{\partial Y_{1}}
 And so
 \begin_inset Formula 
 \begin{eqnarray*}
-\frac{\partial^{2}f}{\partial X_{1}\partial X_{0}^{T}} & = & K_{1}\frac{\partial^{2}f}{\partial Y_{0}^{T}}
+\frac{\partial^{2}f}{\partial X_{1}\partial X_{0}^{T}} & = & K_{1}\frac{\partial^{2}f}{\partial Y_{1}\partial Y_{0}^{T}}
 \end{eqnarray*}
 
 \end_inset

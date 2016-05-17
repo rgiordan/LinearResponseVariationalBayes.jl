@@ -63,7 +63,8 @@ end
 function transform_hessian(dx_dy::Array{Float64, 2}, d2x_dy2::Array{Float64, 3},
 	                         df_dy::Array{Float64, 1}, d2f_dy2::Array{Float64, 2})
 	# Input variables:
-	#   dx_dy[i, j] = dx[i] / dy[j]
+	#   dx_dy[i, j] = dx[i] / dy[j] # TODO: it actually requires -- and is being
+	#                                 passsed -- dx_dy[i, j]= dx[j] / dy[i]
 	#   d2x_dy2[i, j, k] = d2 x[k] / (dy[i] dy[j])
 	#   df_dy[i] = df / dy[i]
 	#   d2f_dy2[i, j] = d2f / (dy[i] dy[j])

@@ -1,5 +1,8 @@
 # LinearResponseVariationalBayes
 
+**Warning: this package is not being actively maintained.  If you are interested
+in using LRVB in Julia, please contact me.**
+
 Helpful utilities for fitting linear response variational Bayes models in Julia,
 with an emphasis on using JuMP.jl for automatic differentiation.
 

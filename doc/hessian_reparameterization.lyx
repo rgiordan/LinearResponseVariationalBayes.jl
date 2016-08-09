@@ -126,7 +126,8 @@ The first term is given by:
 \begin_inset Formula 
 \begin{eqnarray*}
 \left(\frac{dJ}{dX_{j}}\right)_{ab} & = & \frac{d}{dX_{j}}\frac{dX_{a}}{dY_{b}}\\
- & = & \left(K\frac{d^{2}X_{a}}{dYY_{b}}\right)_{j}
+ & = & \left(K^{T}\frac{d^{2}X_{a}}{dYdY_{b}}\right)_{j}\\
+ & = & \left(K^{T}\frac{d^{2}X_{a}}{dYdY^{T}}\right)_{j,b}
 \end{eqnarray*}
 
 \end_inset
@@ -161,6 +162,132 @@ This is written in terms of the quantities
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+And
+\begin_inset Formula 
+\begin{eqnarray*}
+K^{T}f_{YY}K & = & K^{T}\left(K^{T}f_{YY}\right)^{T}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Further simplification?
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+\left(\frac{dJ}{dX_{j}}\right)_{ab} & = & \frac{d}{dX_{j}}\frac{dX_{a}}{dY_{b}}\\
+ & = & \sum_{k}\left(\frac{d}{dY_{k}}\frac{dX_{a}}{dY_{b}}\right)\frac{dY_{k}}{dX_{j}}\\
+ & = & \sum_{k}\frac{d^{2}X_{a}}{dY_{k}dY_{b}}\frac{dY_{k}}{dX_{j}}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We know 
+\begin_inset Formula 
+\begin{eqnarray*}
+\sum_{k}\frac{dX_{a}}{dY_{k}}\frac{dY_{k}}{dX_{b}} & = & \delta_{ab}\\
+\frac{d}{d\alpha}\sum_{k}\frac{dX_{a}}{dY_{k}}\frac{dY_{k}}{dX_{b}} & = & \sum_{k}\left(\frac{d}{d\alpha}\frac{dX_{a}}{dY_{k}}\right)\frac{dY_{k}}{dX_{b}}+\sum_{k}\frac{dX_{a}}{dY_{k}}\left(\frac{d}{d\alpha}\frac{dY_{k}}{dX_{b}}\right)=0\\
+\sum_{k}\left(\frac{d}{dY_{a}}\frac{dX_{a}}{dY_{k}}\right)\frac{dY_{k}}{dX_{b}} & = & -\sum_{k}\frac{dX_{a}}{dY_{k}}\left(\frac{d}{dY_{a}}\frac{dY_{k}}{dX_{b}}\right)\\
+\sum_{k}\frac{d^{2}X_{a}}{dY_{a}dY_{k}}\frac{dY_{k}}{dX_{b}} & = & -\sum_{k}\frac{dX_{a}}{dY_{k}}\left(\frac{d}{dY_{a}}\frac{dY_{k}}{dX_{b}}\right)
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This is a mess.
+ Assume locally quadratic?
+\begin_inset Formula 
+\begin{eqnarray*}
+X & = & DY+\frac{1}{2}Y^{T}HY=DY+\frac{1}{2}Y^{T}Q^{T}QY\\
+H & = & Q^{T}Q=QQ\textrm{ (H is symmetric)}\\
+\left(QY+Q^{-1}D\right)^{T}\left(QY+Q^{-1}D\right) & = & Y^{T}QQY+D^{T}Q^{-1}QY+YQQ^{-1}D+D^{T}Q^{-1}Q^{-1}D\\
+ & = & Y^{T}HY+2D^{T}Y+D^{T}H^{-1}D\Rightarrow\\
+Y^{T}HY+2DY-2X+D^{T}H^{-1}D-D^{T}H^{-1}D & = & \left(QY+Q^{-1}D\right)^{T}\left(QY+Q^{-1}D\right)-2X-D^{T}H^{-1}D=0\Rightarrow\\
+\left(QY+Q^{-1}D\right)^{T}\left(QY+Q^{-1}D\right) & = & 2X+D^{T}H^{-1}D\\
+\left(QY+Q^{-1}D\right) & = & Q\left(Y+H^{-1}D\right)\Rightarrow\\
+\left(Y+H^{-1}D\right)^{T}H\left(Y+H^{-1}D\right) & = & 2X+D^{T}H^{-1}D
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+No, this makes no sense if they are both vectors.
+\end_layout
+
+\begin_layout Subsection
+Further simplification (older)?
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+\frac{d^{2}f}{dX_{i}dX_{j}} & = & -\left(\left(K\frac{dJ}{dX_{j}}K\right)^{T}f_{y}\right)_{i}+\left(K^{T}f_{YY}K\right)_{i,j}\\
+ & = & -\left(\left(K\frac{dJ}{dX_{j}}K\right)^{T}f_{y}\right)_{i}+\left(K^{T}f_{YY}K\right)_{i,j}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The first term would be nice to simplify.
+ Using Einstein index notation:
+\begin_inset Formula 
+\begin{eqnarray*}
+K_{ia}\frac{dJ_{ab}}{dX_{j}}K_{bc}f_{c}^{y} & = & K_{ia}\left(\frac{d}{dX_{j}}\frac{dX_{a}}{dY_{b}}\right)K_{bc}f_{c}^{y}\\
+ & = & K_{ia}\left(K_{ej}\frac{d}{dY_{e}}\frac{dX_{a}}{dY_{b}}\right)K_{bc}f_{c}^{y}\textrm{ (from }K^{T}\frac{d}{dY}\left(\frac{dX_{a}}{dY_{b}}\right)\textrm{)}\\
+ & = & K_{ia}\frac{d^{2}X_{a}}{dY_{b}dY_{e}}K_{ej}\left(K_{bc}f_{c}^{y}\right)\\
+ & = & K_{ia}K_{bc}\frac{d^{2}X_{a}}{dY_{b}dY_{e}}K_{ej}f_{c}^{y}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Hmm, it is symmetric which is not obvious from the formula.
+ Is there something else?
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+\frac{d^{2}f}{dY_{j}dX} & = & \frac{d}{dY_{j}}K^{T}f_{y}\\
+ & = & \left(\frac{dK}{dY_{j}}\right)^{T}f_{y}+K^{T}\left(\frac{d^{2}f_{y}}{dYdY}\right)_{\cdot,j}\\
+\frac{dK}{dY_{j}} & = & \frac{dJ^{-1}}{dY_{j}}\\
+ & = & -J^{-1}\frac{dJ}{dY_{j}}J^{-1}\\
+ & = & -K\frac{d}{dY_{j}}\left(\frac{dX}{dY^{T}}\right)K\\
+ & = & -K\left(\frac{d^{2}X}{dY_{j}dY^{T}}\right)K\Rightarrow\\
+\frac{d^{2}f}{dY_{j}dX} & = & -\left(K\left(\frac{d^{2}X}{dY_{j}dY^{T}}\right)K\right)^{T}f_{y}+K^{T}\left(\frac{d^{2}f_{y}}{dYdY}\right)_{\cdot,j}
+\end{eqnarray*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One more time
 \end_layout
 
 \begin_layout Section
